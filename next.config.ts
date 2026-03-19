@@ -1,13 +1,11 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  // Only keep the ignore settings if you are still having build errors
   typescript: {
-    // !! WARN !!
-    // This allows production builds to successfully complete even if
-    // your project has type errors.
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, 
   },
   eslint: {
-    // Also ignore lint errors for the build
     ignoreDuringBuilds: true,
   },
   async headers() {
