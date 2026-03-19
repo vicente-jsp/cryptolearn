@@ -454,6 +454,7 @@ const QuizTaker = ({
                                     <img 
                                         src={q.imageUrl} 
                                         alt={`Visual for question ${qIndex + 1}`} 
+                                        crossOrigin="anonymous"
                                         className="max-h-64 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full h-full object-contain" 
                                         onLoad={(e) => e.currentTarget.parentElement?.classList.remove('animate-pulse')}
                                     />
@@ -738,7 +739,7 @@ export default function CourseViewerPage() {
             if (typeof firstChild === 'string' && firstChild.startsWith('![Image]')) {
                 const imgMatch = firstChild.match(/!\[.*?\]\((.*?)\)/);
                 const url = imgMatch ? imgMatch[1] : null;
-                if (url) return <img src={url} alt="Lesson Image" className="my-6 max-w-full rounded-lg shadow-md" />;
+                if (url) return <img src={url} alt="Lesson Image" crossOrigin="anonymous" className="my-6 max-w-full rounded-lg shadow-md" />;
             }
             return <p>{children}</p>;
         },
@@ -1297,6 +1298,7 @@ export default function CourseViewerPage() {
                                         key={selectedLesson.id}
                                         controls
                                         src={selectedLesson.videoUrl}
+                                        crossOrigin="anonymous"
                                         className="w-full h-full"
                                         poster="/video-placeholder.png" 
                                     >
@@ -1547,7 +1549,7 @@ export default function CourseViewerPage() {
                                 <iframe src={`${previewFile.url}#toolbar=0`} className="w-full h-full border-0" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center p-10">
-                                    <img src={previewFile.url} className="max-w-full max-h-full object-contain shadow-2xl" alt="Preview" />
+                                    <img src={previewFile.url} crossOrigin="anonymous" className="max-w-full max-h-full object-contain shadow-2xl" alt="Preview" />
                                 </div>
                             )}
                         </div>
