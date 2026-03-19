@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* --- FIX: FORCE CLASS-BASED DARK MODE --- */
+/* This tells Tailwind v4 to activate 'dark:' utilities when the .dark class exists */
+@variant dark (&:where(.dark, .dark *));
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thumb-gray-200::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-full;
+  }
+  .dark .scrollbar-thumb-gray-700::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full;
+  }
+}
+
+@layer base {
+  body {
+    /* Apply transitions so the color switch is smooth */
+    @apply bg-white text-gray-900 transition-colors duration-300;
+  }
+
+  /* 
+     Manually handle the body background when dark mode is active 
+     as a fallback/base layer
+  */
+  :root.dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
+}
