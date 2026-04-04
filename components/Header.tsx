@@ -77,12 +77,12 @@ export default function Header() {
                 <Image
                     src="/wordscryptolearn.png"
                     alt="BlockchainLMS Logo"
-                    width={80}  
-                    height={80} 
+                    width={120}  
+                    height={120} 
                     priority
                     className="h-11 w-auto relative z-10 transition-transform duration-300 group-hover:scale-[1.02]" 
                 />
-                <h1 className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[150px]"> CRYPTOLEARN</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate max-w-[150px]"> CRYPTOLEARN</h1>
             </Link>
           </div>
 
