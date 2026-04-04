@@ -80,9 +80,9 @@ export default function Header() {
                     width={200}  
                     height={200} 
                     priority
-                    className="h-11 w-auto relative z-10 transition-transform duration-300 group-hover:scale-[1.02]" 
+                    className="h-18 w-auto relative z-10 transition-transform duration-300 group-hover:scale-[1.02]" 
                 />
-                <h1 className="font-mono text-xl font-bold text-gray-900 dark:text-white truncate max-w-[150px]"> CryptoLearn</h1>
+                <h1 className="font-serif text-2xl font-bold text-gray-900 dark:text-white truncate max-w-[200px] z-10 transition-transform duration-300 group-hover:scale-[1.02]">CryptoLearn</h1>
             </Link>
           </div>
 
