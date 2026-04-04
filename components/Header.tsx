@@ -75,21 +75,14 @@ export default function Header() {
             <Link href="/dashboard" className="flex items-center gap-2 group relative">
                 <div className="absolute -inset-2 bg-indigo-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <Image
-                    src="/logocryptolearn.png"
+                    src="/finallogo.png"
                     alt="BlockchainLMS Logo"
-                    width={60}  
-                    height={60} 
-                    priority
-                    className="h-11 w-auto relative z-10 transition-transform duration-300 group-hover:scale-[1.02]" 
-                />
-                <Image
-                    src="/wordscryptolearn.png"
-                    alt="BlockchainLMS Words"
                     width={160}  
                     height={48} 
                     priority
                     className="h-11 w-auto relative z-10 transition-transform duration-300 group-hover:scale-[1.02]" 
                 />
+                
             </Link>
           </div>
 
