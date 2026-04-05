@@ -37,8 +37,7 @@ import {
     History,
     X,
     ArrowRight,
-    Paperclip,
-    Loader2
+    Paperclip
 } from 'lucide-react';
 
 // --- Type Definitions ---
@@ -1361,11 +1360,8 @@ export default function CourseViewerPage() {
                                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                                             <div className="w-3 h-3 rounded-full bg-green-400" />
                                         </div>
-                                        <div id="stackblitz-container" className="w-full h-[600px] bg-white">
-                                            {/* Loader showing while SDK initializes */}
-                                            <div className="flex items-center justify-center h-full text-gray-400">
-                                                <Loader2 className="animate-spin mr-2" /> Initializing Virtual Machine...
-                                            </div>
+                                        <div id="stackblitz-container" className="w-full h-[600px] border rounded-lg shadow-xl overflow-hidden bg-white">
+                                            {/* The SDK will inject the project here automatically */}
                                         </div>
                                     </div>
                                 </div>
