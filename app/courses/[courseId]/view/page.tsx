@@ -1,5 +1,6 @@
 // app/courses/[courseId]/view/page.tsx
 'use client';
+import sdk from '@stackblitz/sdk';
 import CertificateCard from '@/components/CertificateCard';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
@@ -1086,6 +1087,22 @@ export default function CourseViewerPage() {
         }
     }, [user, courseId]);
 
+    useEffect(() => {
+        if (selectedLesson?.sandboxUrl && quizState === 'start') {
+            // This extracts the project ID from your URL
+            const projectId = selectedLesson.sandboxUrl.split('/edit/')[1]?.split('?')[0];
+            
+            if (projectId) {
+                sdk.embedProjectId('stackblitz-container', projectId, {
+                    forceEmbedLayout: true,
+                    openFile: 'build-tx.js',
+                    view: 'editor',
+                    height: 600,
+                });
+            }
+        }
+    }, [selectedLesson]);
+
     // course completion
     useEffect(() => {
     if (!modules.length || !enrollmentData) return;
@@ -1112,6 +1129,7 @@ export default function CourseViewerPage() {
             }
         });
     });
+    
 
     const calculatedGrade = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0;
     
@@ -1327,14 +1345,9 @@ export default function CourseViewerPage() {
                                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                                             <div className="w-3 h-3 rounded-full bg-green-400" />
                                         </div>
-                                        <iframe 
-                                            src={selectedLesson.sandboxUrl}
-                                            title={`${selectedLesson.title} Sandbox`}
-                                            onLoad={trackLabUsage}
-                                            className="w-full h-[600px]"
-                                            //sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups allow-presentation"
-                                            allow="accelerometer; camera; microphone; clipboard-read; clipboard-write; fullscreen;"
-                                        />
+                                        <div id="stackblitz-container" className="w-full h-[600px] border rounded-lg shadow-xl overflow-hidden bg-white">
+                                            {/* The SDK will inject the project here automatically */}
+                                        </div>
                                     </div>
                                 </div>
                             )}
