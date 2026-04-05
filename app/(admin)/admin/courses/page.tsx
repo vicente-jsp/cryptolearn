@@ -151,7 +151,7 @@ export default function AdminCourseManagementPage() {
                 )}
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
                 <h2 className="text-xl font-semibold mb-4">All Courses ({filteredCourses.length})</h2>
                 
                 <div className="space-y-4">

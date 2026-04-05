@@ -66,7 +66,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-gray-200/50 dark:border-gray-800/50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl transition-all duration-300">
+    <header className="sticky top-0 z-40 w-full border-b border-gray-200/50 dark:border-gray-800/50 bg-gray-100 dark:bg-gray-900 backdrop-blur-xl transition-all duration-300">
       <div className="w-full px-6 md:px-8">
         <div className="flex h-20 items-center justify-between">
           

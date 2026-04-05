@@ -53,17 +53,17 @@ export default function UserDetailPage() {
     if (!profile) return <div className="text-gray-500 p-4">User not found.</div>;
 
     return (
-        <div className="space-y-6 max-w-3xl">
+        <div className="space-y-6 max-w-3xl ">
             <h1 className="text-3xl font-bold mb-4">User Details: {profile.displayName || profile.email}</h1>
             
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 space-y-4">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 space-y-4">
                 
                 <h2 className="text-xl font-semibold border-b pb-2 mb-4">Profile Information</h2>
 
                 {/* Role Display */}
                 <div className="flex items-center gap-3">
                     <Shield className="w-5 h-5 text-indigo-600" />
-                    <span className="text-gray-700">Role: </span>
+                    <span className="text-gray-500">Role: </span>
                     <span className="font-bold text-lg capitalize text-indigo-700">
                         {profile.role}
                     </span>
@@ -71,13 +71,13 @@ export default function UserDetailPage() {
 
                 <div className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-gray-500" />
-                    <span className="text-gray-700">Email: </span>
+                    <span className="text-gray-500">Email: </span>
                     <span className="font-medium">{profile.email}</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
                     <User className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-700">UID: {profile.uid}</span>
+                    <span className="text-sm text-gray-500">UID: {profile.uid}</span>
                 </div>
 
                 {/* Enrolled Courses Overview */}

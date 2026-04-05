@@ -1147,7 +1147,7 @@ export default function CourseViewerPage() {
                 </aside>
 
                 {/* Main Content Skeleton */}
-                <main className="flex-1 p-6 md:p-12 overflow-y-hidden">
+                <main className="flex-1 p-6 md:p-12 overflow-y-auto">
                     <div className="max-w-4xl mx-auto space-y-8">
                         {/* Breadcrumb & Title */}
                         <div className="space-y-4">
@@ -1183,9 +1183,9 @@ export default function CourseViewerPage() {
     );
 
     return (
-        <div className="flex flex-col md:flex-row h-screen w-screen bg-slate-50 dark:bg-gray-900 overflow-hidden transition-colors duration-300">
+        <div className="fixed top-20 bottom-0 left-0 right-0 flex flex-col md:flex-row h-screen w-screen bg-slate-50 dark:bg-gray-900 overflow-hidden transition-colors duration-300">
             {/* --- SIDEBAR --- */}
-            <aside className="w-full md:w-80 bg-white dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 flex flex-col h-auto md:h-full z-20 shadow-sm md:shadow-none">
+            <aside className="w-full md:w-80 bg-white dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 flex flex-col h-auto md:h-[90%] z-20 shadow-sm md:shadow-none">
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                     <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> Course Outline
@@ -1199,7 +1199,7 @@ export default function CourseViewerPage() {
                     </div>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                <nav className=" overflow-y-auto p-4 space-y-4 custom-scrollbar">
                     {modules.map(module => (
                         <div key={module.id}>
                             <div className="flex justify-between items-center mb-2 px-2">
@@ -1492,7 +1492,7 @@ export default function CourseViewerPage() {
                                 )}
                                 {/* Certificate Modal Overlay */}
                                 {showCertModal && claimedCertData && (
-                                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
+                                    <div className="fixed top-22 inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
                                         <div className="relative w-full max-w-4xl bg-white dark:bg-gray-900 rounded-3xl p-4 md:p-8 overflow-y-auto max-h-[95vh] shadow-2xl border border-white/20">
                                             {/* Close Button */}
                                             <button 

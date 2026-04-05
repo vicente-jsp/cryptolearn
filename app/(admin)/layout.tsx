@@ -67,12 +67,12 @@ export default function AdminLayout({
     }
 
     const activeClasses = "flex items-center gap-3 p-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-md";
-    const inactiveClasses = "flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors";
+    const inactiveClasses = "flex items-center gap-3 p-3 rounded-xl text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200 transition-colors hover:translate-x-1";
 
     return (
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="fixed top-20 bottom-0 left-0 right-0 flex bg-slate-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
             {/* --- FIXED SIDEBAR (250px) --- */}
-            <aside className="w-[250px] flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col">
+            <aside className="w-[250px] flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col h-full">
                 
                 <h1 className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 mb-8">
                     Admin
@@ -94,15 +94,10 @@ export default function AdminLayout({
                     })}
                 </nav>
                 
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <Link href="/dashboard" className="w-full py-2.5 text-center text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors">
-                        ← Back to Main Dashboard
-                    </Link>
-                </div>
             </aside>
 
             {/* --- MAIN CONTENT AREA --- */}
-            <main className="flex-1 overflow-y-auto p-8">
+            <main className="flex-1 overflow-hidden p-8">
                 {children}
             </main>
         </div>

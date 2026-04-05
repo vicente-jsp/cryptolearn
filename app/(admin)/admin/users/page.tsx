@@ -115,56 +115,44 @@ export default function UserManagement() {
     <div className="p-4 space-y-8">
       <h1 className="text-3xl font-bold mb-8">User Management ({users.length} Total)</h1>
       
-      {/* Admin Action Bar (Manual Account Creation) */}
-      <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl shadow-md flex justify-between items-center">
-          <p className="text-sm font-medium text-yellow-800">
-              User accounts must be created first via the Firebase Console (Authentication section).
-          </p>
-          <button 
-              onClick={() => { /* Placeholder for modal/action */ alert("User addition requires Firebase Auth access."); }}
-              className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700"
-          >
-              <UserPlus className="w-4 h-4" /> Add User (Manual)
-          </button>
-      </div>
 
       {/* User Table Sorted by Role */}
       <div className="space-y-6">
         {Object.keys(usersGrouped).sort((a, b) => roleOrder[a as keyof typeof roleOrder] - roleOrder[b as keyof typeof roleOrder]).map((role) => (
             <div key={role} className="bg-white rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-                <h2 className="text-xl font-bold p-4 bg-gray-50 border-b dark:bg-gray-800/50 dark:text-white capitalize">
+                <h2 className="text-xl font-bold p-4 bg-gray-50 border-b dark:bg-gray-800 dark:text-white capitalize">
                     {role}s ({usersGrouped[role].length})
                 </h2>
                 
                 <table className="min-w-full leading-normal">
-                    <thead>
+                    <thead className="bg-white dark:bg-gray-800">
                         <tr>
-                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email / Display Name</th>
-                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">View Profile</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 dark:text-white uppercase tracking-wider">Email / Display Name</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 dark:text-white uppercase tracking-wider">Actions</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 dark:text-white uppercase tracking-wider">View Profile</th>
                         </tr>
                     </thead>
                     <tbody>
                         {usersGrouped[role].map((user) => (
-                            <tr key={user.uid} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-5 py-3 border-b border-gray-200 bg-white text-sm">
-                                    <p className="font-medium text-gray-900">{user.email}</p>
-                                    <p className="text-xs text-gray-500">{user.displayName}</p>
+                            <tr key={user.uid} className="dark:hover:bg-gray-600 hover:bg-gray-300 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 transition-colors">
+                                <td className="px-5 py-3 text-sm ">
+                                    <p className="font-medium text-black dark:text-white">{user.email}</p>
+                                    <p className="text-xs text-gray-700 dark:text-gray-400">{user.displayName}</p>
                                 </td>
-                                <td className="px-5 py-3 border-b border-gray-200 bg-white text-sm flex gap-2">
+                                <td className="px-5 py-3 text-sm flex gap-2">
                                     {/* Delete Button */}
                                     <button
                                         onClick={() => handleDeleteUser(user)}
                                         disabled={isDeleting || user.role === 'admin'} // Cannot delete self/other admins easily
-                                        className="text-red-500 hover:text-red-700 p-2 rounded-lg transition-colors disabled:opacity-50"
+                                        className="text-red-500 hover:text-black dark:hover:text-white p-2 rounded-lg transition-colors disabled:opacity-50"
                                         title="Delete Firestore Profile (Requires manual Auth deletion)"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </td>
-                                <td className="px-5 py-3 border-b border-gray-200 bg-white text-sm">
+                                <td className="px-5 py-3 text-sm">
                                     {/* Link to view detailed profile */}
-                                    <button onClick={() => router.push(`/admin/users/${user.uid}`)} className="text-indigo-600 hover:text-indigo-800 p-2 rounded-lg transition-colors">
+                                    <button onClick={() => router.push(`/admin/users/${user.uid}`)} className="text-indigo-600 dark:hover:text-yellow-500 hover:text-green-500 p-2 rounded-lg transition-colors">
                                         <CornerUpRight className="w-4 h-4" />
                                     </button>
                                 </td>
