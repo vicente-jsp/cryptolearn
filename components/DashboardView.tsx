@@ -310,7 +310,7 @@ export default function DashboardView() {
                             
                             const quizzesSnap = await getDocs(collection(lessonDoc.ref, 'quizzes'));
                             if (!quizzesSnap.empty) {
-                                totalTrackableItems++; // Count the quiz as a separate trackable item
+                              // Count the quiz as a separate trackable item
                                 
                                 // Fetch student's attempt for this specific quiz
                                 const attemptSnap = await getDoc(doc(quizzesSnap.docs[0].ref, 'quizAttempts', authUser.uid));
