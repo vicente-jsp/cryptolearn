@@ -37,7 +37,8 @@ import {
     History,
     X,
     ArrowRight,
-    Paperclip
+    Paperclip,
+    Loader2
 } from 'lucide-react';
 
 // --- Type Definitions ---
@@ -1088,20 +1089,35 @@ export default function CourseViewerPage() {
     }, [user, courseId]);
 
     useEffect(() => {
-        if (selectedLesson?.sandboxUrl && quizState === 'start') {
-            // This extracts the project ID from your URL
-            const projectId = selectedLesson.sandboxUrl.split('/edit/')[1]?.split('?')[0];
-            
-            if (projectId) {
-                sdk.embedProjectId('stackblitz-container', projectId, {
-                    forceEmbedLayout: true,
-                    openFile: 'build-tx.js',
-                    view: 'editor',
-                    height: 600,
-                });
+        const initStackBlitz = async () => {
+            // Only run if there is a URL and we are not in the middle of a quiz
+            if (selectedLesson?.sandboxUrl && quizState === 'start') {
+                
+                // 1. Extract the Project ID from your URL
+                // Works for: https://stackblitz.com/edit/project-id-here?embed=1
+                const urlParts = selectedLesson.sandboxUrl.split('/edit/')[1];
+                const projectId = urlParts?.split('?')[0];
+
+                if (projectId) {
+                    try {
+                        // 2. Inject the project into the div with id="stackblitz-container"
+                        await sdk.embedProjectId('stackblitz-container', projectId, {
+                            forceEmbedLayout: true,
+                            openFile: 'build-tx.js', // The file to show by default
+                            view: 'editor',
+                            height: '600',
+                            theme: 'dark', // Can match your app theme
+                            terminalHeight: 40,
+                        });
+                    } catch (error) {
+                        console.error("StackBlitz SDK failed to load:", error);
+                    }
+                }
             }
-        }
-    }, [selectedLesson]);
+        };
+
+        initStackBlitz();
+    }, [selectedLesson, quizState]);
 
     // course completion
     useEffect(() => {
@@ -1345,14 +1361,12 @@ export default function CourseViewerPage() {
                                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                                             <div className="w-3 h-3 rounded-full bg-green-400" />
                                         </div>
-                                        <iframe 
-                                            src={selectedLesson.sandboxUrl}
-                                            title={`${selectedLesson.title} Sandbox`}
-                                            onLoad={trackLabUsage}
-                                            className="w-full h-[600px]"
-                                            sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups allow-presentation"
-                                            allow="accelerometer; camera; microphone; clipboard-read; clipboard-write; fullscreen;"
-                                        />
+                                        <div id="stackblitz-container" className="w-full h-[600px] bg-white">
+                                            {/* Loader showing while SDK initializes */}
+                                            <div className="flex items-center justify-center h-full text-gray-400">
+                                                <Loader2 className="animate-spin mr-2" /> Initializing Virtual Machine...
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
