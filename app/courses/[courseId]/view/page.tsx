@@ -1087,36 +1087,46 @@ export default function CourseViewerPage() {
         }
     }, [user, courseId]);
 
-    useEffect(() => {
-        const initStackBlitz = async () => {
-            // Only run if there is a URL and we are not in the middle of a quiz
-            if (selectedLesson?.sandboxUrl && quizState === 'start') {
-                
-                // 1. Extract the Project ID from your URL
-                // Works for: https://stackblitz.com/edit/project-id-here?embed=1
-                const urlParts = selectedLesson.sandboxUrl.split('/edit/')[1];
-                const projectId = urlParts?.split('?')[0];
+useEffect(() => {
+    let vm: any = null; // Track the VM instance
 
-                if (projectId) {
-                    try {
-                        // 2. Inject the project into the div with id="stackblitz-container"
-                        await sdk.embedProjectId('stackblitz-container', projectId, {
-                            forceEmbedLayout: true,
-                            openFile: 'build-tx.js', // The file to show by default
-                            view: 'editor',
-                            height: '600',
-                            theme: 'dark', // Can match your app theme
-                            terminalHeight: 40,
-                        });
-                    } catch (error) {
-                        console.error("StackBlitz SDK failed to load:", error);
-                    }
+    const initStackBlitz = async () => {
+        if (selectedLesson?.sandboxUrl && quizState === 'start') {
+            const urlParts = selectedLesson.sandboxUrl.split('/edit/')[1];
+            const projectId = urlParts?.split('?')[0];
+
+            if (projectId) {
+                try {
+                    // Clear the container first to prevent duplicates
+                    const container = document.getElementById('stackblitz-container');
+                    if (container) container.innerHTML = ''; 
+
+                    vm = await sdk.embedProjectId('stackblitz-container', projectId, {
+                        forceEmbedLayout: true,
+                        openFile: 'build-tx.js',
+                        view: 'editor',
+                        height: '600',
+                        theme: 'dark',
+                    });
+                } catch (error) {
+                    console.error("StackBlitz SDK failed to load:", error);
                 }
             }
-        };
+        }
+    };
 
-        initStackBlitz();
-    }, [selectedLesson, quizState]);
+    initStackBlitz();
+
+    // CLEANUP: If the user leaves the page or switches lessons, kill the VM
+    return () => {
+        if (vm) {
+            // There isn't a direct "destroy" but clearing the innerHTML 
+            // helps the browser garbage collect the worker.
+            const container = document.getElementById('stackblitz-container');
+            if (container) container.innerHTML = '';
+        }
+    };
+}, [selectedLesson?.id, quizState]); // Use .id for more stable dependency
 
     // course completion
     useEffect(() => {
@@ -1360,9 +1370,12 @@ export default function CourseViewerPage() {
                                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                                             <div className="w-3 h-3 rounded-full bg-green-400" />
                                         </div>
-                                        <div id="stackblitz-container" className="w-full h-[600px] border rounded-lg shadow-xl overflow-hidden bg-white">
-                                            {/* The SDK will inject the project here automatically */}
-                                        </div>
+                                        <iframe 
+                                            key={selectedLesson.id}
+                                            src={`${selectedLesson.sandboxUrl}&view=editor&terminal=1`}
+                                            className="w-full h-[600px] border-0"
+                                            allow="cross-origin-isolated" // <--- CRITICAL FOR HEADERS
+                                        />
                                     </div>
                                 </div>
                             )}
