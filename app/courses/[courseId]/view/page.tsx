@@ -1345,9 +1345,14 @@ export default function CourseViewerPage() {
                                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                                             <div className="w-3 h-3 rounded-full bg-green-400" />
                                         </div>
-                                        <div id="stackblitz-container" className="w-full h-[600px] border rounded-lg shadow-xl overflow-hidden bg-white">
-                                            {/* The SDK will inject the project here automatically */}
-                                        </div>
+                                        <iframe 
+                                            src={selectedLesson.sandboxUrl}
+                                            title={`${selectedLesson.title} Sandbox`}
+                                            onLoad={trackLabUsage}
+                                            className="w-full h-[600px]"
+                                            sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups allow-presentation"
+                                            allow="accelerometer; camera; microphone; clipboard-read; clipboard-write; fullscreen;"
+                                        />
                                     </div>
                                 </div>
                             )}
