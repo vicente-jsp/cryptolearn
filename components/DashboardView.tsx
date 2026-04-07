@@ -114,7 +114,7 @@ const CourseCard = ({
   let linkText = 'View & Enroll';
 
   if (isEducator) {
-    linkHref = `/courses/${course.id}/manage`;
+    linkHref = `/educator-panel/${course.id}/manage`;
     linkText = 'Manage Course';
   } else if (isEnrolled) {
     linkHref = `/courses/${course.id}/view`;

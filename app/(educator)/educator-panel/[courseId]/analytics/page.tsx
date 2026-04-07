@@ -338,7 +338,7 @@ export default function AnalyticsPage() {
         <div className="max-w-7xl mx-auto pb-20 space-y-8">
             {/* Header */}
             <div className="flex flex-col gap-2">
-                <Link href={`/courses/${courseId}/manage`} className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors mb-2">
+                <Link href={`/educator-panel/${courseId}/manage`} className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors mb-2">
                     <ArrowLeft className="w-4 h-4 mr-1" /> Back to Course Management
                 </Link>
                 <h1 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Course Analytics</h1>

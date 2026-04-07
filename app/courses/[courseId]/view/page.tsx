@@ -1,6 +1,5 @@
 // app/courses/[courseId]/view/page.tsx
 'use client';
-import sdk from '@stackblitz/sdk';
 import CertificateCard from '@/components/CertificateCard';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
@@ -22,6 +21,9 @@ import { db } from '@/firebase/config';
 import useAuth from '@/hooks/useAuth';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw'; 
 import { 
     MessageCircle, 
     CheckCircle, 
@@ -734,17 +736,32 @@ export default function CourseViewerPage() {
 };
 
     const components = {
-        p: ({ children }: { children: React.ReactNode }) => {
+        p: ({ children, ...props }: any) => {
             const childNodes = Array.isArray(children) ? children : [children];
             const firstChild = childNodes[0];
-            if (typeof firstChild === 'string' && firstChild.startsWith('![Image]')) {
-                const imgMatch = firstChild.match(/!\[.*?\]\((.*?)\)/);
-                const url = imgMatch ? imgMatch[1] : null;
-                if (url) return <img src={url} alt="Lesson Image" crossOrigin="anonymous" className="my-6 max-w-full rounded-lg shadow-md" />;
+            if (
+            typeof firstChild === 'string' &&
+            firstChild.startsWith('![Image]')
+        ) {
+            const imgMatch = firstChild.match(/!\[.*?\]\((.*?)\)/);
+            const url = imgMatch ? imgMatch[1] : null;
+
+            if (url) {
+                return (
+                    <img 
+                        src={url} 
+                        alt="Lesson Image" 
+                        crossOrigin="anonymous" 
+                        className="my-6 max-w-full rounded-lg shadow-md" 
+                    />
+                );
             }
-            return <p>{children}</p>;
-        },
-    };
+        }
+        
+        // 2. Return standard paragraph with spreading remaining props for compatibility
+        return <p {...props}>{children}</p>;
+    },
+};
 
     const isLastLessonOfCourse = useMemo(() => {
         if (!modules.length) return false;
@@ -1087,46 +1104,7 @@ export default function CourseViewerPage() {
         }
     }, [user, courseId]);
 
-useEffect(() => {
-    let vm: any = null; // Track the VM instance
 
-    const initStackBlitz = async () => {
-        if (selectedLesson?.sandboxUrl && quizState === 'start') {
-            const urlParts = selectedLesson.sandboxUrl.split('/edit/')[1];
-            const projectId = urlParts?.split('?')[0];
-
-            if (projectId) {
-                try {
-                    // Clear the container first to prevent duplicates
-                    const container = document.getElementById('stackblitz-container');
-                    if (container) container.innerHTML = ''; 
-
-                    vm = await sdk.embedProjectId('stackblitz-container', projectId, {
-                        forceEmbedLayout: true,
-                        openFile: 'build-tx.js',
-                        view: 'editor',
-                        height: '600',
-                        theme: 'dark',
-                    });
-                } catch (error) {
-                    console.error("StackBlitz SDK failed to load:", error);
-                }
-            }
-        }
-    };
-
-    initStackBlitz();
-
-    // CLEANUP: If the user leaves the page or switches lessons, kill the VM
-    return () => {
-        if (vm) {
-            // There isn't a direct "destroy" but clearing the innerHTML 
-            // helps the browser garbage collect the worker.
-            const container = document.getElementById('stackblitz-container');
-            if (container) container.innerHTML = '';
-        }
-    };
-}, [selectedLesson?.id, quizState]); // Use .id for more stable dependency
 
     // course completion
     useEffect(() => {
@@ -1354,9 +1332,15 @@ useEffect(() => {
                             className="prose prose-lg max-w-none mb-12 leading-relaxed
                                     prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-li:text-gray-700
                                     dark:prose-invert dark:prose-headings:text-white dark:prose-p:text-gray-300 dark:prose-strong:text-white dark:prose-li:text-gray-300
-                                    [&_p:empty]:min-h-[1.5em]"  
-                            dangerouslySetInnerHTML={{ __html: convertMarkdownImagesToHtml(selectedLesson.content) }} 
-                            />
+                                    [&_p:empty]:min-h-[1.5em]"  >
+                            <ReactMarkdown 
+                                remarkPlugins={[remarkGfm]} 
+                                rehypePlugins={[rehypeRaw]} 
+                                components={components} // Uses your custom 'p' parser for images
+                            >
+                                {selectedLesson.content}
+                            </ReactMarkdown>
+                            </div>
                             
                             {selectedLesson.sandboxUrl && (
                                 <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
@@ -1370,19 +1354,18 @@ useEffect(() => {
                                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                                             <div className="w-3 h-3 rounded-full bg-green-400" />
                                         </div>
-                                        <iframe 
+                                        <iframe
+                                            key={selectedLesson.id} // Forces the lab to reload when you change lessons
                                             src={selectedLesson.sandboxUrl}
-                                            style={{
-                                                width: '100%',
-                                                height: '600px',
-                                                border: '0',
-                                                borderRadius: '8px',
-                                                overflow: 'hidden'
-                                            }}
                                             title="StackBlitz Sandbox"
-                                            allow="accelerometer; ambient-light; hid; camera; gyroscope; microphone; midi; selection; usb; vr; xr-spatial-tracking; clipboard-read; clipboard-write; fullscreen; picture-in-picture"
-                                            sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+                                            className="w-full h-[600px] rounded-lg border-0"
+                                            // @ts-expect-error: 'credentialless' is a modern attribute not yet supported by standard TypeScript types
+
+                                            credentialless="true" 
+                                            allow="cross-origin-isolated; fullscreen; clipboard-read; clipboard-write;"
                                         />
+
+                                        
                                     </div>
                                 </div>
                             )}

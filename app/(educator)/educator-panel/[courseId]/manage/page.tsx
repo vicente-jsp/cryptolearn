@@ -1209,11 +1209,11 @@ export default function ManageCoursePage() {
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{course?.title || 'Untitled Course'}</h2>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                    <Link href={`/courses/${courseId}/enrollments`} className="relative flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                    <Link href={`/educator-panel/${courseId}/enrollments`} className="relative flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                         <Users className="w-4 h-4" /> Enrollments
                         {pendingEnrollmentCount > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800 animate-pulse"></span>}
                     </Link>
-                    <Link href={`/courses/${courseId}/analytics`} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                    <Link href={`/educator-panel/${courseId}/analytics`} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                         <BarChart className="w-4 h-4" /> Analytics
                     </Link>
                     <button onClick={deleteCourseAndCollections} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
