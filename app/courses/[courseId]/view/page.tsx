@@ -1371,10 +1371,17 @@ useEffect(() => {
                                             <div className="w-3 h-3 rounded-full bg-green-400" />
                                         </div>
                                         <iframe 
-                                            key={selectedLesson.id}
-                                            src={`${selectedLesson.sandboxUrl}&view=editor&terminal=1`}
-                                            className="w-full h-[600px] border-0"
-                                            allow="cross-origin-isolated" // <--- CRITICAL FOR HEADERS
+                                            src={selectedLesson.sandboxUrl}
+                                            style={{
+                                                width: '100%',
+                                                height: '600px',
+                                                border: '0',
+                                                borderRadius: '8px',
+                                                overflow: 'hidden'
+                                            }}
+                                            title="StackBlitz Sandbox"
+                                            allow="accelerometer; ambient-light; hid; camera; gyroscope; microphone; midi; selection; usb; vr; xr-spatial-tracking; clipboard-read; clipboard-write; fullscreen; picture-in-picture"
+                                            sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
                                         />
                                     </div>
                                 </div>

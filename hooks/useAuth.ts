@@ -4,7 +4,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
-// ✅ Merged type — don't extend User (avoids TS conflicts)
+
 export type AuthUser = {
   uid: string;
   email: string | null;
@@ -25,18 +25,18 @@ const useAuth = () => {
         const unsubscribeFirestore = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const firestoreData = docSnap.data();
-            // ✅ Merge Firebase Auth + Firestore data safely
+            
             setUser({
               uid: authUser.uid,
               email: authUser.email,
               displayName:
                 firestoreData.displayName ?? authUser.displayName ?? null,
               photoURL:
-                firestoreData.photoURL ?? authUser.photoURL ?? null, // Cloudinary or Firebase
+                firestoreData.photoURL ?? authUser.photoURL ?? null, 
               role: firestoreData.role ?? undefined,
             });
           } else {
-            // Fallback to just Auth user if Firestore doc not found
+            
             setUser({
               uid: authUser.uid,
               email: authUser.email,

@@ -117,20 +117,20 @@ export default function AnalyticsPage() {
     const [error, setError] = useState<string | null>(null);
     
     const redFlagStudents = useMemo(() => {
-    // Add the ?. to ensure it doesn't crash if studentData is null
+    
     return (studentData || []).filter(s => {
         const { riskLevel } = calculateStudentStatus(s.progress, s.latestGrade || 0, s.lastAccessedAt || Date.now());
         return riskLevel === 'high';
     });
 }, [studentData]);
-    // Dark Mode Detection for Charts
+    
     const [isDarkMode, setIsDarkMode] = useState(false);
     useEffect(() => {
-        // Initial check
+        
         if (typeof window !== 'undefined') {
             setIsDarkMode(document.documentElement.classList.contains('dark'));
         }
-        // Listener for theme changes
+        
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
         return () => observer.disconnect();
     }, []);
 
-    // Chart Options Generator
+    
     const getChartOptions = (title: string): ChartOptions<any> => ({
         responsive: true,
         maintainAspectRatio: false,

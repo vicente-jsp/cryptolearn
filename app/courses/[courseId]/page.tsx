@@ -91,10 +91,8 @@ export default function CourseDetailPage() {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
         const completedIds = userSnap.data()?.completedCourses || [];
 
-        // Required level logic
         const requiredLevel = targetCourse.level === 'advanced' ? 'intermediate' : 'basic';
 
-        // Fetch details of all completed courses
         const completedDocs = await Promise.all(
             completedIds.map((id: string) => getDoc(doc(db, 'courses', id)))
         );
@@ -103,7 +101,7 @@ export default function CourseDetailPage() {
             if (!d.exists()) return false;
             const data = d.data();
             const levelMatches = data.level === requiredLevel;
-            // Check if student has finished at least one course with matching level AND at least one matching tag
+            
             const tagMatches = data.tags.some((t: string) => targetCourse.tags.includes(t));
             return levelMatches && tagMatches;
         });
@@ -123,7 +121,7 @@ export default function CourseDetailPage() {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        // A. Fetch course details
+        
         const courseDocRef = doc(db, 'courses', courseId);
         const courseDocSnap = await getDoc(courseDocRef);
         
@@ -135,7 +133,7 @@ export default function CourseDetailPage() {
         const courseData = { id: courseDocSnap.id, ...courseDocSnap.data() } as Course;
         setCourse(courseData);
 
-        // B. If user is logged in, check enrollment AND prerequisites
+        
         if (user) {
           const requestDocRef = doc(db, 'courses', courseId, 'enrollmentRequests', user.uid);
           const requestDocSnap = await getDoc(requestDocRef);

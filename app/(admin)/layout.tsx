@@ -70,7 +70,7 @@ export default function AdminLayout({
     const inactiveClasses = "flex items-center gap-3 p-3 rounded-xl text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200 transition-colors hover:translate-x-1";
 
     return (
-        <div className="fixed top-20 bottom-0 left-0 right-0 flex bg-slate-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
+        <div className=" flex bg-slate-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
             {/* --- FIXED SIDEBAR (250px) --- */}
             <aside className="w-[250px] flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col h-full">
                 
