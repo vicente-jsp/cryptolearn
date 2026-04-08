@@ -566,7 +566,7 @@ export default function DashboardView() {
              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">My Created Courses</h2>
           </div>
           <Link
-            href="/courses/create"
+            href="/educator-panel/create"
             className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95"
           >
             Create New Course <ArrowRight className="w-4 h-4" />
