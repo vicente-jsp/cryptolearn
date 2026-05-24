@@ -265,24 +265,19 @@ export default function DashboardView() {
         // --- STUDENT LOGIC ---
         if (profile.role === 'student' && profile.enrolledCourses && profile.enrolledCourses.length > 0) {
 
-          console.log("LOG 3: Starting enrolled course processing loop.");
-
-    
           const courseIds = profile.enrolledCourses;
           const completedIds = profile.completedCourses || [];
           
-
-          // FIX: Use Promise.all on the results (resolvedCourses) instead of the side-effect (coursesList.push)
           const resolvedCourses = await Promise.all(courseIds.map(async (courseId) => {
 
               try {
 
                   const courseDocSnap = await getDoc(doc(db, 'courses', courseId));
-                  
-                  // Check existence first
-                  if (!courseDocSnap.exists()) return null; // Return null if not found
+                  if (!courseDocSnap.exists()) return null; 
                   
                   const cData = { id: courseDocSnap.id, ...courseDocSnap.data() } as Course;
+
+
                   if (cData.isHidden && !completedIds.includes(courseId)) {
                       return null;
                   }
@@ -306,12 +301,12 @@ export default function DashboardView() {
                     for (const modDoc of modulesSnap.docs) {
                         const lessonsSnap = await getDocs(collection(modDoc.ref, 'lessons'));
                         for (const lessonDoc of lessonsSnap.docs) {
-                            totalTrackableItems++; // Count the lesson
+                            
                             
                             const quizzesSnap = await getDocs(collection(lessonDoc.ref, 'quizzes'));
                             if (!quizzesSnap.empty) {
                               // Count the quiz as a separate trackable item
-                                
+                                totalTrackableItems++;
                                 // Fetch student's attempt for this specific quiz
                                 const attemptSnap = await getDoc(doc(quizzesSnap.docs[0].ref, 'quizAttempts', authUser.uid));
                                 if (attemptSnap.exists()) {

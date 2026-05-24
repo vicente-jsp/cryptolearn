@@ -116,13 +116,22 @@ export default function AnalyticsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    const redFlagStudents = useMemo(() => {
-    
-    return (studentData || []).filter(s => {
-        const { riskLevel } = calculateStudentStatus(s.progress, s.latestGrade || 0, s.lastAccessedAt || Date.now());
+    const redFlagStudents = studentData.filter(student => {
+        
+        const { riskLevel } = calculateStudentStatus(
+            student.progress, 
+            student.latestGrade || 0, 
+            student.lastAccessedAt || Date.now()
+        );
         return riskLevel === 'high';
     });
-}, [studentData]);
+
+    const riskStyles = {
+        high: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
+        medium: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
+        low: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
+    };
+
     
     const [isDarkMode, setIsDarkMode] = useState(false);
     useEffect(() => {
@@ -367,26 +376,6 @@ export default function AnalyticsPage() {
                 />
             </div>
 
-            {redFlagStudents.length > 0 && (
-                <div className="mb-8 p-6 bg-red-50 border-2 border-red-200 rounded-2xl animate-pulse">
-                    <h2 className="text-red-800 font-black flex items-center gap-2 mb-4 uppercase tracking-tight">
-                        <AlertCircle className="w-6 h-6" /> Actionable Red Flags: Targeted Intervention Required
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {redFlagStudents.map(student => (
-                            <div key={student.id} className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
-                                <div>
-                                    <p className="font-bold text-gray-900">{student.email}</p>
-                                    <p className="text-xs text-red-600 font-medium">Critical Risk: Low engagement detected.</p>
-                                </div>
-                                <button className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700">
-                                    Email Intervention
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -424,7 +413,7 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
 
-                {/* CURRICULUM AUDIT: Lab vs Grade Correlation */}
+                {/* CURRICULUM AUDIT: Lab vs Grade Correlation 
                     <div className="lg:col-span-2 bg-indigo-50 dark:bg-indigo-900/10 p-8 rounded-3xl border-2 border-indigo-100 dark:border-indigo-800 shadow-inner">
                         <div className="flex items-center gap-3 mb-6">
                             <Sparkles className="w-6 h-6 text-indigo-600" />
@@ -442,7 +431,7 @@ export default function AnalyticsPage() {
                                 }} 
                             />
                         </div>
-                    </div>
+                    </div>*/}
             </div>
 
             {/* Student Table */}
@@ -457,6 +446,7 @@ export default function AnalyticsPage() {
                                 <th className="px-6 py-4 font-semibold">Student</th>
                                 <th className="px-6 py-4 font-semibold">Progress</th>
                                 <th className="px-6 py-4 font-semibold">Average Grade</th>
+                                <th className="px-6 py-4 font-semibold">Risk Assessment</th> 
                                 <th className="px-6 py-4 font-semibold">Status</th>
                             </tr>
                         </thead>
@@ -468,7 +458,14 @@ export default function AnalyticsPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                studentData.map(student => (
+                                studentData.map(student => {
+                                // --- CALL THE ANALYTICS ENGINE FOR EACH STUDENT ---
+                                const { riskLevel, flagReason } = calculateStudentStatus(
+                                    student.progress,
+                                    student.averageGrade || 0, // Using our newly calculated Average Grade
+                                    student.lastAccessedAt || Date.now()
+                                );
+                                return (
                                     <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                             {student.email}
@@ -493,6 +490,16 @@ export default function AnalyticsPage() {
                                                 <span className="text-gray-400 italic text-xs">No Attempts</span>
                                             )}
                                         </td>
+
+                                        <td className="px-6 py-4">
+                                            <span 
+                                                className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${riskStyles[riskLevel]}`}
+                                                title={flagReason} // Shows the specific warning reason on mouse hover!
+                                            >
+                                                {riskLevel}
+                                            </span>
+                                        </td>
+
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                 student.progress >= 100 
@@ -503,7 +510,8 @@ export default function AnalyticsPage() {
                                             </span>
                                         </td>
                                     </tr>
-                                ))
+                                );
+                            })
                             )}
                         </tbody>
                     </table>

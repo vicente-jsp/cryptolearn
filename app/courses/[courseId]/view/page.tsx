@@ -1132,6 +1132,8 @@ export default function CourseViewerPage() {
             }
         });
     });
+
+
     
 
     const calculatedGrade = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0;
@@ -1146,6 +1148,24 @@ export default function CourseViewerPage() {
         setIsEligible(false);
     }
 }, [modules, enrollmentData, courseProgress]);
+
+    useEffect(() => {
+        if (user && courseId) {
+            const updateLastAccess = async () => {
+                try {
+                    // Update the student's enrollment document with the current server time
+                    const enrollmentRef = doc(db, 'courses', courseId, 'enrollmentRequests', user.uid);
+                    await updateDoc(enrollmentRef, {
+                        lastAccessedAt: serverTimestamp() // Saves the exact database time
+                    });
+                } catch (err) {
+                    console.error("Error updating last access:", err);
+                }
+            };
+            updateLastAccess();
+        }
+    }, [user, courseId, selectedLesson?.id]); // Runs every time the student switches lessons
+
     // --- MODERNIZED SKELETON LOADER ---
     if (loading) {
         return (
