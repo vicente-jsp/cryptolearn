@@ -327,7 +327,7 @@ export default function DashboardView() {
                   }
 
                   // --- 2. FIXED: CALCULATION WITH SET PROTECTION & 100% CAP ---
-                  const validCompletions = completedItems.filter(id => activeLessonIds.has(id));
+                  const validCompletions = completedItems.filter((id: string) => activeLessonIds.has(id));
                     const uniqueCompletions = new Set(validCompletions);
                     const calculatedProgress = totalTrackableItems > 0 
                         ? Math.round((uniqueCompletions.size / totalTrackableItems) * 100) 
