@@ -245,7 +245,7 @@ export default function DashboardView() {
 
       setIsDataLoading(true);
       try {
-        console.log("LOG 1: Attempting to fetch user profile...");
+        
 
         const userDocRef = doc(db, 'users', authUser.uid);
         const userSnap = await getDoc(userDocRef);
@@ -253,7 +253,7 @@ export default function DashboardView() {
         const profile = userSnap.data() as UserProfile;
         setUserProfile(profile);
 
-        console.log("LOG 2: Attempting to fetch notifications...");
+        
 
         const notifQ = query(
             collection(db, 'users', authUser.uid, 'notifications'),
@@ -267,9 +267,18 @@ export default function DashboardView() {
 
           const courseIds = profile.enrolledCourses;
           const completedIds = profile.completedCourses || [];
-          
-          const resolvedCourses = await Promise.all(courseIds.map(async (courseId) => {
 
+          const enrollmentsQuery = query(
+              collectionGroup(db, 'enrollmentRequests'),
+              where('studentId', '==', authUser.uid),
+              where('status', '==', 'enrolled')
+          );
+          const enrollSnap = await getDocs(enrollmentsQuery);
+
+
+          const resolvedCourses = await Promise.all(courseIds.map(async (courseId) => {
+          
+            
               try {
 
                   const courseDocSnap = await getDoc(doc(db, 'courses', courseId));
@@ -282,46 +291,49 @@ export default function DashboardView() {
                       return null;
                   }
 
-                  const enrollmentDocSnap = await getDoc(doc(db, 'courses', courseId, 'enrollmentRequests', authUser.uid));
-                    let completedItems: string[] = [];
-                    let lastAccessedMs = Date.now();
+                  const myEnrollmentDoc = enrollSnap.docs.find(d => d.data().courseId === courseId);
+                  const completedItems = myEnrollmentDoc?.data().completedItems || [];
+                  const lastAccessedMs = myEnrollmentDoc?.data().lastAccessedAt?.toMillis() || Date.now();
 
-                    if (enrollmentDocSnap.exists()) {
-                        const eData = enrollmentDocSnap.data();
-                        completedItems = eData.completedItems || [];
-                        lastAccessedMs = eData.lastAccessedAt?.toMillis() || Date.now();
-                    }
+                  // Fetch Modules to calculate Total Lessons and Grades
+                  const modulesSnap = await getDocs(collection(db, 'courses', courseId, 'modules'));
+                  let totalTrackableItems = 0;
+                  let totalScore = 0;
+                  let totalPossiblePoints = 0;
 
-                    // 4. Fetch Modules to calculate Total Items and Grades
-                    const modulesSnap = await getDocs(collection(db, 'courses', courseId, 'modules'));
-                    let totalTrackableItems = 0;
-                    let totalScore = 0;
-                    let totalPossiblePoints = 0;
+                  const activeLessonIds = new Set<string>(); 
 
-                    for (const modDoc of modulesSnap.docs) {
-                        const lessonsSnap = await getDocs(collection(modDoc.ref, 'lessons'));
-                        for (const lessonDoc of lessonsSnap.docs) {
-                            
-                            
-                            const quizzesSnap = await getDocs(collection(lessonDoc.ref, 'quizzes'));
-                            if (!quizzesSnap.empty) {
-                              // Count the quiz as a separate trackable item
-                                totalTrackableItems++;
-                                // Fetch student's attempt for this specific quiz
-                                const attemptSnap = await getDoc(doc(quizzesSnap.docs[0].ref, 'quizAttempts', authUser.uid));
-                                if (attemptSnap.exists()) {
-                                    const aData = attemptSnap.data();
-                                    totalScore += aData.score || 0;
-                                    totalPossiblePoints += aData.totalQuestions || 0;
-                                }
-                            }
-                        }
-                    }
 
-                    // 5. Finalize Course Data for the Card
-                    cData.progress = totalTrackableItems > 0 
-                        ? Math.round((completedItems.length / totalTrackableItems) * 100) 
+                  for (const modDoc of modulesSnap.docs) {
+                      const lessonsSnap = await getDocs(collection(modDoc.ref, 'lessons'));
+                      for (const lessonDoc of lessonsSnap.docs) {
+                          
+                          // --- 1. FIXED: COUNT THE LESSON ---
+                          // This must be here so we have a correct denominator
+                          totalTrackableItems++; 
+                          activeLessonIds.add(lessonDoc.id);
+                          
+                          const quizzesSnap = await getDocs(collection(lessonDoc.ref, 'quizzes'));
+                          if (!quizzesSnap.empty) {
+                              // Fetch student's attempt for this specific quiz to get grades
+                              const attemptSnap = await getDoc(doc(quizzesSnap.docs[0].ref, 'quizAttempts', authUser.uid));
+                              if (attemptSnap.exists()) {
+                                  const aData = attemptSnap.data();
+                                  totalScore += aData.score || 0;
+                                  totalPossiblePoints += aData.totalQuestions || 0;
+                              }
+                          }
+                      }
+                  }
+
+                  // --- 2. FIXED: CALCULATION WITH SET PROTECTION & 100% CAP ---
+                  const validCompletions = completedItems.filter(id => activeLessonIds.has(id));
+                    const uniqueCompletions = new Set(validCompletions);
+                    const calculatedProgress = totalTrackableItems > 0 
+                        ? Math.round((uniqueCompletions.size / totalTrackableItems) * 100) 
                         : 0;
+
+                    cData.progress = Math.min(100, calculatedProgress); // Locked at max 100%
                     
                     cData.avgGrade = totalPossiblePoints > 0 
                         ? Math.round((totalScore / totalPossiblePoints) * 100) 
@@ -329,42 +341,37 @@ export default function DashboardView() {
                         
                     cData.lastAccessedAt = lastAccessedMs;
 
-                  // SUCCESS: Return the valid course object
-                  return cData; 
+                    return cData; 
 
-              } catch (innerError) {
-                  // IF ANY PERMISSION ERROR OCCURS, catch it and return null to prevent Promise.all rejection
-                  console.warn(`SKIPPING COURSE ${courseId} DUE TO PERMISSION ERROR:`, innerError);
-                  return null; // <--- CRITICAL FIX: Return null instead of just 'return;'
-              }
-          }));
+                } catch (innerError) {
+                    console.warn(`SKIPPING COURSE ${courseId} DUE TO PERMISSION ERROR:`, innerError);
+                    return null; 
+                }
+            }));
 
           // Filter out all the null results from the failed fetches
-          const coursesList = resolvedCourses.filter((c): c is Course => c !== null);
-          const allFetched = resolvedCourses.filter((c): c is Course => c !== null);
-          const finished = allFetched.filter(c => completedIds.includes(c.id));
-          const active = allFetched.filter(c => !completedIds.includes(c.id));
+              const allFetched = resolvedCourses.filter((c): c is Course => c !== null);
+              const finished = allFetched.filter(c => completedIds.includes(c.id));
+              const active = allFetched.filter(c => !completedIds.includes(c.id));
 
-          setEnrolledCourses(coursesList);
-          setFinishedCourses(finished);
-          setEnrolledCourses(active);
-          // History Logic (uses the new coursesList)
-          const history = [...coursesList]
-              .filter(c => (c.lastAccessedAt || 0) > 0)
-              .sort((a, b) => (b.lastAccessedAt || 0) - (a.lastAccessedAt || 0))
-              .slice(0, 4);
-                  
-            
-        } else {
-            setEnrolledCourses([]);
-            setFinishedCourses([]);
-            
-        }
+              setFinishedCourses(finished);
+              setEnrolledCourses(active);
+              
+              // History Logic (uses the new active list)
+              const history = [...active]
+                  .filter(c => (c.lastAccessedAt || 0) > 0)
+                  .sort((a, b) => (b.lastAccessedAt || 0) - (a.lastAccessedAt || 0))
+                  .slice(0, 4);
+                      
+          } else {
+              setEnrolledCourses([]);
+              setFinishedCourses([]);
+          }
 
         // --- EDUCATOR LOGIC ---
         if (profile.role === 'educator') {
 
-          console.log("LOG 4: Starting educator course fetch.");
+          
 
           const createdQ = query(
             collection(db, 'courses'),

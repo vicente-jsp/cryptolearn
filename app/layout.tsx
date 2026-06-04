@@ -8,7 +8,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Blockchain LMS',
+  title: 'Cryptolearn',
   description: 'A new generation learning management system',
 };
 

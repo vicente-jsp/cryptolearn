@@ -330,7 +330,7 @@ export default function LandingPage() {
                 <div className="container mx-auto px-6">
                     <RevealOnScroll>
                         <div className="text-center max-w-3xl mx-auto mb-16">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">Why BlockchainLMS?</h2>
+                            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">Why Cryptolearn?</h2>
                             <p className="text-gray-600 dark:text-gray-400 text-lg">
                                 Traditional learning is static. We made it dynamic, interactive, and intelligent.
                             </p>
@@ -484,7 +484,7 @@ export default function LandingPage() {
                     </div>
                     
                     <div className="pt-8 border-t border-gray-200 dark:border-gray-800 text-center text-sm text-gray-400 dark:text-gray-500">
-                        <p>&copy; {new Date().getFullYear()} BlockchainLMS. All Rights Reserved.</p>
+                        <p>&copy; {new Date().getFullYear()} CryptoLearn. All Rights Reserved.</p>
                     </div>
                 </div>
             </footer>

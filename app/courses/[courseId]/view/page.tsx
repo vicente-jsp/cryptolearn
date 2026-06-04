@@ -984,12 +984,6 @@ export default function CourseViewerPage() {
         // 2. IMPORTANT: Refresh all data so the 'modules' state gets the new quizAttempt
         await fetchData(); 
 
-        // 3. Refresh enrollment data (existing)
-        if (user) {
-            const enrollmentRef = doc(db, 'courses', courseId, 'enrollmentRequests', user.uid);
-            const snap = await getDoc(enrollmentRef);
-            if(snap.exists()) setEnrollmentData(snap.data() as EnrollmentData);
-        }
     }
 };
 
@@ -1003,21 +997,35 @@ export default function CourseViewerPage() {
 
     const handleMarkComplete = async () => {
         if (!user || !selectedLesson) return;
+
+        
+
         const isQuizPresentAndIncomplete = selectedLesson.quiz && quizAttempts.length === 0;
         
         if (isQuizPresentAndIncomplete) { alert("Please complete the quiz before marking this lesson as complete."); return; }
         try {
             await updateDoc(doc(db, 'courses', courseId, 'enrollmentRequests', user.uid), { completedItems: arrayUnion(selectedLesson.id) });
-            setEnrollmentData((prev) => ({ ...prev!, completedItems: [...(prev?.completedItems || []), selectedLesson.id] }));
+            setEnrollmentData((prev) => {
+            if (!prev) return null;
+            const existing = prev.completedItems || [];
+            const updated = existing.includes(selectedLesson.id) 
+                ? existing 
+                : [...existing, selectedLesson.id]; // Only append if it doesn't exist
+            return { ...prev, completedItems: updated };
+        });
             alert("Lesson completed! The next lesson is now unlocked.");
         } catch (error) { console.error(error); setError('Failed to mark complete.'); }
     };
 
     const courseProgress = useMemo(() => {
         if (!modules.length || !enrollmentData) return 0;
-        const totalItems = modules.reduce((acc, module) => acc + module.lessons.length, 0);
-        if (totalItems === 0) return 0;
-        return Math.round(((enrollmentData.completedItems?.length || 0) / totalItems) * 100);
+            const totalItems = modules.reduce((acc, module) => acc + module.lessons.length, 0);
+    const uniqueCompletedItems = new Set(enrollmentData.completedItems || []);
+    const completedCount = uniqueCompletedItems.size;
+
+
+    if (totalItems === 0) return 0;
+    return Math.min(100, Math.round((completedCount / totalItems) * 100));
     }, [modules, enrollmentData]);
 
     const isCurrentLessonComplete = enrollmentData?.completedItems?.includes(selectedLesson?.id || '') ?? false;
@@ -1138,7 +1146,6 @@ export default function CourseViewerPage() {
 
     const calculatedGrade = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0;
     
-    console.log(`Grade Debug: Score ${totalScore} / Total ${totalQuestions} = ${calculatedGrade}%`);
 
     setFinalGrade(calculatedGrade);
 
@@ -1544,7 +1551,7 @@ export default function CourseViewerPage() {
                                 {/* Certificate Modal Overlay */}
                                 {showCertModal && claimedCertData && (
                                     <div className="fixed top-22 inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
-                                        <div className="relative w-full max-w-4xl bg-white dark:bg-gray-900 rounded-3xl p-4 md:p-8 overflow-y-auto max-h-[95vh] shadow-2xl border border-white/20">
+                                        <div className="relative w-full max-w-5xl bg-white dark:bg-gray-900 rounded-3xl p-4 md:p-8 overflow-y-auto max-h-[95vh] shadow-2xl border border-white/20">
                                             {/* Close Button */}
                                             <button 
                                                 onClick={() => setShowCertModal(false)} 
@@ -1557,11 +1564,7 @@ export default function CourseViewerPage() {
                                                 <CertificateCard cert={claimedCertData} />
                                             </div>
                                             
-                                            <div className="mt-6 text-center no-print">
-                                                <p className="text-gray-500 text-xs">
-                                                    You can print this page to save your certificate as a PDF.
-                                                </p>
-                                            </div>
+                                            
                                         </div>
                                     </div>
                                 )}
