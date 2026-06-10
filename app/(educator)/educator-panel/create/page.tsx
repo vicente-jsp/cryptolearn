@@ -236,12 +236,16 @@ export default function CreateCourse() {
                             <Type className="w-4 h-4 text-indigo-500" />
                             Course Title
                         </label>
+                        <span className={`text-xs font-mono ${title.length >= 50 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                            {title.length} / 75
+                        </span>
                         <input
                             type="text"
                             id="title"
                             placeholder="e.g. Advanced Solidity Patterns"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
+                            maxLength={75}
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                         />
                     </div>
@@ -252,11 +256,15 @@ export default function CreateCourse() {
                             <FileText className="w-4 h-4 text-indigo-500" />
                             Description
                         </label>
+                        <span className={`text-xs font-mono ${description.length >= 220 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                            {description.length} / 350
+                        </span>
                         <textarea
                             id="description"
                             placeholder="What will students learn in this course?"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
+                            maxLength={350}
                             rows={5}
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
                         />
