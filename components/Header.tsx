@@ -87,6 +87,8 @@ export default function Header() {
           </div>
 
           {/* --- CENTER: Search Bar --- */}
+          {/*
+
           {user && (
               <div className="hidden md:flex flex-1 max-w-md mx-8">
                   <div className="relative w-full group">
@@ -109,7 +111,7 @@ export default function Header() {
                   </div>
               </div>
           )}
-
+*/}
           {/* --- RIGHT: Controls  --- */}
           <div className="flex items-center gap-3 sm:gap-6">
             <button 

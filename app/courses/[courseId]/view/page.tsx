@@ -347,7 +347,7 @@ const QuizTaker = ({
     moduleId: string;
     lessonId: string;
     currentAttemptCount: number;
-    onQuizCompleted: () => void;
+    onQuizCompleted: (attempt: QuizAttempt) => void; 
 }) => {
     const { user } = useAuth();
     const [selectedAnswers, setSelectedAnswers] = useState<{ [key: string]: number | string | boolean }>({});
@@ -418,7 +418,7 @@ const QuizTaker = ({
             batch.update(enrollmentDocRef, { completedItems: arrayUnion(lessonId) });
             
             await batch.commit();
-            onQuizCompleted();
+            onQuizCompleted({ ...attemptData, submittedAt: new Date() }); 
         } catch (err: any) {
             console.error('Failed to submit quiz:', err);
             setError(`Failed to submit: ${err.message}`);
@@ -976,15 +976,41 @@ export default function CourseViewerPage() {
         }
     };
 
-    const handleQuizCompleted = async () => {
-        if (selectedLesson?.quiz && currentModuleId) {
-        // 1. Refresh the specific quiz status (existing)
-        await checkQuizStatus(currentModuleId, selectedLesson.id, selectedLesson.quiz.id);
-        
-        // 2. IMPORTANT: Refresh all data so the 'modules' state gets the new quizAttempt
-        await fetchData(); 
+    const handleQuizCompleted = async (attempt: QuizAttempt) => {
+    if (!selectedLesson || !currentModuleId) return;
+            setModules((prevModules) =>
+                prevModules.map((mod) => {
+                    if (mod.id !== currentModuleId) return mod;
+                    return {
+                        ...mod,
+                        lessons: mod.lessons.map((l) => {
+                            if (l.id !== selectedLesson.id) return l;
+                            return { ...l, quizAttempt: attempt }; // Inject the attempt locally
+                        }),
+                    };
+                })
+            );
+            setEnrollmentData((prev) => {
+        if (!prev) return null;
+        const existing = prev.completedItems || [];
+        const updated = existing.includes(selectedLesson.id) ? existing : [...existing, selectedLesson.id];
+        return { ...prev, completedItems: updated };
+    });
 
+    setQuizAttempts([attempt]);
+    setAttemptsMade(attempt.attemptCount || 1);
+    setQuizState('result');
+
+    try {
+        if (selectedLesson.quiz) {
+            await checkQuizStatus(currentModuleId, selectedLesson.id, selectedLesson.quiz.id);
+            await fetchData(); 
+        }
+    } catch (e) {
+        console.error("Background sync error:", e);
     }
+
+    
 };
 
     const handleRetakeQuiz = async () => {
@@ -1003,19 +1029,37 @@ export default function CourseViewerPage() {
         const isQuizPresentAndIncomplete = selectedLesson.quiz && quizAttempts.length === 0;
         
         if (isQuizPresentAndIncomplete) { alert("Please complete the quiz before marking this lesson as complete."); return; }
+
+        const previousItems = enrollmentData?.completedItems || [];
+        const updatedItems = previousItems.includes(selectedLesson.id) 
+        ? previousItems 
+        : [...previousItems, selectedLesson.id];
+
+        setEnrollmentData(prev => prev ? { ...prev, completedItems: updatedItems } : null);
+
+
+
         try {
-            await updateDoc(doc(db, 'courses', courseId, 'enrollmentRequests', user.uid), { completedItems: arrayUnion(selectedLesson.id) });
-            setEnrollmentData((prev) => {
-            if (!prev) return null;
-            const existing = prev.completedItems || [];
-            const updated = existing.includes(selectedLesson.id) 
-                ? existing 
-                : [...existing, selectedLesson.id]; // Only append if it doesn't exist
-            return { ...prev, completedItems: updated };
-        });
-            alert("Lesson completed! The next lesson is now unlocked.");
-        } catch (error) { console.error(error); setError('Failed to mark complete.'); }
-    };
+            const enrollmentRef = doc(db, 'courses', courseId, 'enrollmentRequests', user.uid);
+            await updateDoc(enrollmentRef, { 
+                completedItems: arrayUnion(selectedLesson.id) 
+            });
+
+            // Only alert if it's NOT the last lesson of the course
+            if (!isLastLessonOfCourse) {
+                alert("Lesson completed! The next lesson is now unlocked.");
+            }
+
+                
+            } catch (error) { 
+            console.error("Failed to save progress in background:", error);
+            
+            // --- ROLLBACK LOGIC ---
+            // Since the database write failed, revert the progress bar to its original state
+            setEnrollmentData(prev => prev ? { ...prev, completedItems: previousItems } : null);
+            setError('Failed to mark complete. Please check your connection.'); 
+        }
+        };
 
     const courseProgress = useMemo(() => {
         if (!modules.length || !enrollmentData) return 0;

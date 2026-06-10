@@ -18,7 +18,7 @@ import {
 
 const sidebarNavLinks = [
     { name: 'Dashboard', href: '/educator/dashboard', icon: LayoutDashboard },
-    { name: 'My Courses', href: '/educator-panel/my-courses', icon: BookCopy },
+    //{ name: 'My Courses', href: '/educator-panel/my-courses', icon: BookCopy },
     { name: 'Create Course', href: '/educator-panel/create', icon: PlusSquare },
     { name: 'Notifications', href: '/notifications', icon: Bell },
     { name: 'My Profile', href: '/educator/profile', icon: UserCircle },

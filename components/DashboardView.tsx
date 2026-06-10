@@ -351,21 +351,28 @@ export default function DashboardView() {
 
           // Filter out all the null results from the failed fetches
               const allFetched = resolvedCourses.filter((c): c is Course => c !== null);
-              const finished = allFetched.filter(c => completedIds.includes(c.id));
-              const active = allFetched.filter(c => !completedIds.includes(c.id));
+
+              const sortedAllFetched = [...allFetched].sort((a, b) => 
+                  a.title.localeCompare(b.title)
+              );
+
+const finished = sortedAllFetched.filter(c => completedIds.includes(c.id));
+const active = sortedAllFetched.filter(c => !completedIds.includes(c.id));
+
 
               setFinishedCourses(finished);
               setEnrolledCourses(active);
               
               // History Logic (uses the new active list)
-              const history = [...active]
+              const activeCourses = sortedAllFetched.filter(c => !completedIds.includes(c.id));
+              const history = [...activeCourses]
                   .filter(c => (c.lastAccessedAt || 0) > 0)
                   .sort((a, b) => (b.lastAccessedAt || 0) - (a.lastAccessedAt || 0))
                   .slice(0, 4);
                       
           } else {
-              setEnrolledCourses([]);
-              setFinishedCourses([]);
+            setEnrolledCourses([]);
+            setFinishedCourses([]);
           }
 
         // --- EDUCATOR LOGIC ---
@@ -379,8 +386,13 @@ export default function DashboardView() {
           );
           const createdSnap = await getDocs(createdQ);
           const eduCourses = createdSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Course[];
-          setCreatedCourses(eduCourses);
+
+          const sortedEduCourses = [...eduCourses].sort((a, b) => 
+              a.title.localeCompare(b.title)
+          );
           
+          
+          setCreatedCourses(sortedEduCourses); 
           // --- REMOVED RECENT ACTIVITY LOGIC ---
           // setRecentActivity(sortedEduCourses);
         }

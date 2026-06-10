@@ -100,7 +100,7 @@ export default function NotificationsPage() {
 
     const getLinkForNotification = (notif: Notification) => {
         if (notif.type === 'enrollment_request') {
-            return `/courses/${notif.courseId}/enrollments`; // Educator view
+            return `educator-panel/${notif.courseId}/enrollments`; // Educator view
         }
         // Student view (or fallback)
         return `/courses/${notif.courseId}/view`; 

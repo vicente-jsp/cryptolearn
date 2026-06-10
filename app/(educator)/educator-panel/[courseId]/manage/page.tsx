@@ -783,7 +783,7 @@ const AddQuizForm = ({
         e.preventDefault();
         setError('');
         if (!title.trim()) { setError('Quiz title is required.'); return; }
-        if (!dueDate) { setError('Due date is required.'); return; }
+        //if (!dueDate) { setError('Due date is required.'); return; }
         if (questions.length === 0) { setError('Please add at least one question.'); return; }
 
         // Basic Validation
@@ -807,7 +807,7 @@ const AddQuizForm = ({
             await setDoc(mainQuizDataRef, {
                 title,
                 questions,
-                dueDate: new Date(dueDate),
+                dueDate: dueDate ? new Date(dueDate) : null, 
                 settings: {
                     showAnswers,
                     isLocked,
@@ -1162,7 +1162,7 @@ export default function ManageCoursePage() {
             }
             batch.delete(courseRef);
             await batch.commit();
-            window.location.href = '/educator/courses/my-courses';
+            window.location.href = '../..';
         } catch (err) { console.error(err); } finally { setLoading(false); }
     };
 
