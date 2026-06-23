@@ -1,6 +1,13 @@
 // app/courses/[courseId]/view/page.tsx
 'use client';
-import CertificateCard from '@/components/CertificateCard';
+//import CertificateCard from '@/components/CertificateCard';
+import dynamic from 'next/dynamic';
+
+const CertificateCard = dynamic(() => import('@/components/CertificateCard'), { 
+    ssr: false,
+    loading: () => <div className="h-[400px] flex items-center justify-center">Loading Certificate...</div>
+});
+
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
     doc,
@@ -1185,7 +1192,7 @@ export default function CourseViewerPage() {
         });
     });
 
-
+    
     
 
     const calculatedGrade = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0;
