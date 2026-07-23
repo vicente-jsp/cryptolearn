@@ -6,7 +6,6 @@ import axios from 'axios';
 import { 
     UploadCloud, 
     X, 
-    FileText, 
     Image as ImageIcon, 
     Loader2, 
     CheckCircle 
@@ -28,6 +27,17 @@ export default function AddContentModal({ onClose, onContentAdded }: AddContentM
     const [dragActive, setDragActive] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const validateAndSetImage = (selectedFile: File) => {
+        setError('');
+        const isImage = selectedFile.type.startsWith('image/');
+        if (!isImage) {
+            setError("Invalid file type. Only image files (PNG, JPG, WEBP, GIF, SVG) are allowed here.");
+            setFile(null);
+            return;
+        }
+        setFile(selectedFile);
+    };
+
     // Handle Drag Events
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -44,13 +54,13 @@ export default function AddContentModal({ onClose, onContentAdded }: AddContentM
         e.stopPropagation();
         setDragActive(false);
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            setFile(e.dataTransfer.files[0]);
+            validateAndSetImage(e.dataTransfer.files[0]); 
         }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
+            validateAndSetImage(e.target.files[0]);
         }
     };
 
@@ -69,20 +79,14 @@ export default function AddContentModal({ onClose, onContentAdded }: AddContentM
                 formData
             );
             
-            const { secure_url, resource_type, original_filename } = response.data;
-            let markdown = '';
-            
-            // Smart Markdown formatting
-            if (resource_type === 'image') {
-                markdown = `![${original_filename}](${secure_url})`;
-            } else if (resource_type === 'video') {
-                 markdown = `[Watch Video: ${original_filename}](${secure_url})`;
-            } else {
-                markdown = `[Download ${file.name}](${secure_url})`;
-            }
-            
+            const { secure_url } = response.data;
+            const markdown = `![Image](${secure_url})`;
+
             onContentAdded(markdown);
             onClose();
+            
+            // Smart Markdown formatting
+            
 
         } catch (err) {
             console.error("Upload failed", err);
@@ -100,7 +104,7 @@ export default function AddContentModal({ onClose, onContentAdded }: AddContentM
             >
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Add Content</h2>
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Add Image Resource</h2>
                     <button 
                         onClick={onClose}
                         className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
@@ -112,7 +116,7 @@ export default function AddContentModal({ onClose, onContentAdded }: AddContentM
                 {/* Body */}
                 <div className="p-6">
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Upload an image to embed it, or a document (PDF, DOCX) to create a download link.
+                        Upload an image to embed it directly into the lesson content layout.
                     </p>
 
                     {/* Drop Zone */}
@@ -133,6 +137,7 @@ export default function AddContentModal({ onClose, onContentAdded }: AddContentM
                         <input 
                             ref={inputRef}
                             type="file" 
+                            accept="image/png, image/jpeg, image/jpg, image/webp, image/gif"
                             className="hidden" 
                             onChange={handleFileChange} 
                         />
@@ -145,12 +150,12 @@ export default function AddContentModal({ onClose, onContentAdded }: AddContentM
                                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                                     Click to upload <span className="font-normal text-gray-500">or drag and drop</span>
                                 </p>
-                                <p className="text-xs text-gray-400 mt-1">SVG, PNG, JPG, PDF, DOCX</p>
+                                <p className="text-xs text-gray-400 mt-1">SVG, PNG, JPG, WEBP, GIF</p>
                             </div>
                         ) : (
                             <div className="flex items-center gap-4 bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800">
                                 <div className="p-2 bg-white dark:bg-gray-800 rounded-md shadow-sm text-indigo-600 dark:text-indigo-400">
-                                    {file.type.startsWith('image/') ? <ImageIcon className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
+                                    <ImageIcon className="w-6 h-6" /> 
                                 </div>
                                 <div className="text-left flex-1 min-w-0">
                                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">

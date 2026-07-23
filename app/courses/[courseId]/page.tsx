@@ -4,15 +4,19 @@
 import { useEffect, useState, useCallback } from 'react';
 import { 
   doc, 
+  addDoc,
   getDoc, 
   serverTimestamp, 
   collection, 
-  writeBatch 
+  writeBatch,
+  setDoc,
+  arrayUnion
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import useAuth from '@/hooks/useAuth';
 import { useParams, useRouter } from 'next/navigation';
 import BackButton from '@/components/BackButton';
+import ImageUploader from '@/components/ImageUploader'; 
 import Link from 'next/link';
 import { 
     BookOpen, 
@@ -23,7 +27,11 @@ import {
     Tag,
     UserPlus,
     Lock,
-    AlertTriangle
+    AlertTriangle,
+    CreditCard,
+    X,
+    ShieldCheck,
+    DollarSign
 } from 'lucide-react';
 
 // --- Types ---
@@ -35,12 +43,90 @@ interface Course {
   tags: string[]; 
   imageUrl?: string;
   instructorIds?: string[];
+  pricingType?: 'free' | 'paid';
+  price?: number;
+  paymentInstructions?: string;
 }
 
 type EnrollmentStatus = 'unenrolled' | 'pending' | 'enrolled' | 'rejected';
 
 // --- Helper Component: Status Badge ---
+const PaymentModal = ({ course, user, onClose, onSuccess }: any) => {
+    const [proofUrl, setProofUrl] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const handlePaymentSubmit = async () => {
+        if (!proofUrl) return alert("Please upload your payment receipt.");
+        setIsSubmitting(true);
+
+        try {
+            const requestRef = doc(db, 'courses', course.id, 'enrollmentRequests', user.uid);
+            await setDoc(requestRef, {
+                studentId: user.uid,
+                studentEmail: user.email,
+                studentName: user.displayName || user.email,
+                courseId: course.id,
+                courseTitle: course.title,
+                status: 'pending',
+                paymentType: 'paid',
+                paymentProofUrl: proofUrl,
+                price: course.price || 0,
+                requestedAt: serverTimestamp(),
+                
+            });
+
+            await addDoc(collection(db, 'admin_notifications'), {
+                message: `New payment proof from ${user.email} for ${course.title}`,
+                type: 'payment_verify',
+                createdAt: serverTimestamp(),
+                isRead: false
+            });
+
+            onSuccess();
+        } catch (err) {
+            console.error(err);
+            alert("Error submitting payment.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-white/20">
+                <div className="p-6 border-b dark:border-gray-800 flex justify-between items-center bg-indigo-600 text-white">
+                    <h2 className="font-bold text-lg flex items-center gap-2">
+                        <CreditCard className="w-5 h-5" /> Checkout
+                    </h2>
+                    <button onClick={onClose}><X className="w-6 h-6" /></button>
+                </div>
+                <div className="p-6 space-y-6">
+                    <div>
+                        <p className="text-sm text-gray-500 uppercase font-bold tracking-widest">Course</p>
+                        <p className="text-xl font-black text-gray-900 dark:text-white">{course.title}</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300">Instructions:</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{course.paymentInstructions || "Please send payment to our designated GCash/Bank account."}</p>
+                        <div className="mt-3 text-2xl font-black text-indigo-600">₱{course.price}</div>
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Upload Receipt</p>
+                        <ImageUploader onUploadComplete={(url) => setProofUrl(url)} />
+                    </div>
+                    <button 
+                        onClick={handlePaymentSubmit}
+                        disabled={!proofUrl || isSubmitting}
+                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        {isSubmitting ? <Loader2 className="animate-spin" /> : <ShieldCheck />}
+                        {isSubmitting ? 'Submitting...' : 'I have paid, Submit Proof'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const StatusBadge = ({ status }: { status: EnrollmentStatus }) => {
     if (status === 'enrolled') {
@@ -81,7 +167,7 @@ export default function CourseDetailPage() {
 
     const [isLocked, setIsLocked] = useState(false);
     const [prereqMissing, setPrereqMissing] = useState<string | null>(null);
-
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     // --- 1. Prerequisite Logic Helper ---
   const checkPrerequisites = async (targetCourse: Course) => {
@@ -157,52 +243,52 @@ export default function CourseDetailPage() {
   }, [courseId, user]);
 
   // --- 2. Handle Enrollment ---
-  const handleEnroll = async () => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
+  const handleRequestEnrollment = async () => {
+    if (!user) { router.push('/login'); return; }
     if (!course || isLocked) return;
 
-    const instructorIds = course.instructorIds;
-    if (!instructorIds?.length) {
-        setError("Cannot enroll: No instructor assigned to this course.");
+    // Branch logic: If paid, show modal. If free, submit pending request.
+    if (course.pricingType === 'paid') {
+        setShowPaymentModal(true);
         return;
     }
 
     setIsSubmitting(true);
     try {
       const batch = writeBatch(db);
-
-      // A. Create enrollment request
       const requestDocRef = doc(db, 'courses', courseId, 'enrollmentRequests', user.uid);
+      
       batch.set(requestDocRef, {
-        status: 'pending',
+        status: 'pending', // Manual approval required
+        paymentType: 'free',
         requestedAt: serverTimestamp(),
         studentEmail: user.email,
         studentId: user.uid,
         courseId: courseId, 
+        courseTitle: course.title,
+        studentName: user.displayName || user.email
       }, { merge: true });
 
-      // B. Notify Instructors
-      instructorIds.forEach((id) => {
-          const notifRef = doc(collection(db, 'users', id, 'notifications'));
-          batch.set(notifRef, {
-              message: `${user.email} requested to enroll in ${course.title}`,
-              courseId: courseId,
-              type: 'enrollment_request',
-              createdAt: serverTimestamp(),
-              isRead: false
+      // Notify Instructors
+      if (course.instructorIds) {
+          course.instructorIds.forEach((id) => {
+              const notifRef = doc(collection(db, 'users', id, 'notifications'));
+              batch.set(notifRef, {
+                  message: `${user.email} requested to join: ${course.title}`,
+                  courseId: courseId,
+                  type: 'enrollment_request',
+                  createdAt: serverTimestamp(),
+                  isRead: false
+              });
           });
-      });
+      }
       
       await batch.commit();
       setEnrollmentStatus('pending');
     } catch (error) {
-      console.error("Failed to submit enrollment request:", error);
-      setError('Failed to submit enrollment request. Please try again.');
+      setError('Failed to submit request.');
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
   
@@ -239,7 +325,7 @@ export default function CourseDetailPage() {
         return { 
             text: 'Request Enrollment', 
             disabled: false, 
-            onClick: handleEnroll, 
+            onClick: handleRequestEnrollment, 
             className: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30' 
         };
     }
@@ -266,7 +352,17 @@ export default function CourseDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-900 py-12 px-4 transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
-            
+            {showPaymentModal && course && (
+                <PaymentModal 
+                    course={course} 
+                    user={user} 
+                    onClose={() => setShowPaymentModal(false)} 
+                    onSuccess={() => {
+                        setShowPaymentModal(false);
+                        setEnrollmentStatus('pending'); // Updates the UI to show "Pending Approval"
+                    }} 
+                />
+            )}
             <div className="mb-6">
                 <BackButton />
             </div>
@@ -320,14 +416,22 @@ export default function CourseDetailPage() {
                         <div className="md:w-80 flex-shrink-0">
                             <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 sticky top-24">
                                 <h3 className="font-bold text-gray-900 dark:text-white mb-4">Enrollment Status</h3>
-                                
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-4">
+                                                Join this course to access all lessons, quizzes, and materials.
+                                            </p>
                                 <div className="mb-6">
                                     <StatusBadge status={enrollmentStatus} />
                                     {enrollmentStatus === 'unenrolled' && (
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                                            Join this course to access all lessons, quizzes, and materials.
-                                        </p>
+                                        
+                                        <div className="mb-4 flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-xl border dark:border-gray-700">
+                                            
+                                            <span className="text-xs font-bold text-gray-400 uppercase">Price</span>
+                                            <span className="text-lg font-black text-indigo-600">
+                                                {course?.pricingType === 'paid' ? `₱${course.price}` : 'FREE'}
+                                            </span>
+                                        </div>
                                     )}
+                                    
                                 </div>
 
                                 {/* PREREQUISITE WARNING BOX */}

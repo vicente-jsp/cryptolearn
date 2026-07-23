@@ -222,8 +222,19 @@ const LessonForm = ({
                     onContentAdded={(newContent) => {
                         const isImageUrl = /\.(jpg|jpeg|png|webp|avif|gif|svg)$/i.test(newContent) || newContent.includes('cloudinary');
                         let contentToInsert = newContent;
-                        if (isImageUrl && !newContent.startsWith('![')) {
-                            contentToInsert = `![Lesson Image](${newContent})`;
+                        if (isImageUrl) {
+                            if (!newContent.startsWith('![')) {
+                                // Case A: The modal returned a raw URL. Force it to ![Image](url)
+                                contentToInsert = `![Image](${newContent})`;
+                            } else {
+                                // Case B: The modal returned a markdown format like ![my_file.png](url)
+                                // We use regex to extract the URL and rewrite the alt-text to strictly "Image"
+                                const urlMatch = newContent.match(/!\[.*?\]\((.*?)\)/);
+                                const url = urlMatch ? urlMatch[1] : null;
+                                if (url) {
+                                    contentToInsert = `![Image](${url})`; // Force-rename to "Image"
+                                }
+                            }
                         }
                         if (editorRef.current) {
                             editorRef.current.insertContent(contentToInsert);
@@ -262,10 +273,15 @@ const LessonForm = ({
                 <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">Lesson Attachments (Optional)</label>
                     <FileUploader 
-                        onUploadComplete={(url: string, name: string) => 
-                            setAttachments([...attachments, { url, name }])
-                        } 
-                        // You are MISSING onUploadStart and onUploadError here!
+                        onUploadStart={() => setIsVideoUploading(true)} // Reuse this state to block the Save button
+                        onUploadComplete={(url: string, name: string) => {
+                            setAttachments([...attachments, { url, name }]);
+                            setIsVideoUploading(false); // Unblock
+                        }} 
+                        onUploadError={(err) => {
+                            setError(err);
+                            setIsVideoUploading(false); // Unblock
+                        }}
                     />
                     <div className="flex flex-wrap gap-2 mt-2">
                         {attachments.map((file, i) => (
@@ -315,7 +331,7 @@ const LessonForm = ({
                         onClick={() => setIsModalOpen(true)}
                         className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
                     >
-                        + Add Image/File
+                        + Add Image
                     </button>
                     <div className="flex gap-3 w-full sm:w-auto">
                         <button

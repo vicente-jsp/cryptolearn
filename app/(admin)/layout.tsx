@@ -15,12 +15,14 @@ import {
     Settings, 
     User, 
     Activity, 
-    Loader2 
+    Loader2,
+    CreditCard 
 } from 'lucide-react'; // Added icons
 
 // --- Admin Navigation Links ---
 const adminNavItems = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: Activity },
+    { name: 'Payments', href: '/admin/payments', icon: CreditCard },
     { name: 'User Management', href: '/admin/users', icon: Users },
     { name: 'Course Management', href: '/admin/courses', icon: BookOpen },
     { name: 'Tag Management', href: '/admin/tags', icon: Tag },

@@ -1,4 +1,3 @@
-// app/(educator)/courses/create/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -18,7 +17,9 @@ import {
     Loader2, 
     AlertCircle,
     ArrowLeft,
-    ChartColumnIncreasing
+    ChartColumnIncreasing,
+    DollarSign, // Added for pricing
+    CreditCard  // Added for instructions
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -45,18 +46,21 @@ export default function CreateCourse() {
   const [error, setError] = useState<string | null>(null);
   const [level, setLevel] = useState('basic');
 
+  // --- NEW PRICING STATE ---
+  const [pricingType, setPricingType] = useState<'free' | 'paid'>('free');
+  const [price, setPrice] = useState<string>('');
+  const [paymentInstructions, setPaymentInstructions] = useState('');
+
   // -------------------- Fetch Tags --------------------
   useEffect(() => {
     const fetchTags = async () => {
       try {
         const tagsCollectionRef = collection(db, 'tags');
         const querySnapshot = await getDocs(tagsCollectionRef);
-
         const tagsList = querySnapshot.docs.map((doc) => ({
           value: doc.data().name,
           label: doc.data().name,
         })) as SelectOption[];
-
         setAvailableTags(tagsList);
       } catch (err) {
         console.error(err);
@@ -65,7 +69,6 @@ export default function CreateCourse() {
         setLoading(false);
       }
     };
-
     fetchTags();
   }, []);
 
@@ -73,15 +76,13 @@ export default function CreateCourse() {
   const selectStyles: StylesConfig<SelectOption, true> = {
     control: (base, state) => ({
       ...base,
-      backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff', // gray-800 : white
-      borderColor: theme === 'dark' ? '#374151' : '#e5e7eb', // gray-700 : gray-200
+      backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+      borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
       color: theme === 'dark' ? '#ffffff' : '#111827',
       padding: '2px',
       borderRadius: '0.75rem',
       boxShadow: state.isFocused ? '0 0 0 2px rgba(99, 102, 241, 0.2)' : 'none',
-      '&:hover': {
-        borderColor: '#6366f1',
-      },
+      '&:hover': { borderColor: '#6366f1' },
     }),
     menu: (base) => ({
       ...base,
@@ -98,19 +99,13 @@ export default function CreateCourse() {
       color: theme === 'dark' ? '#f3f4f6' : '#111827',
       cursor: 'pointer',
     }),
-    singleValue: (base) => ({
-      ...base,
-      color: theme === 'dark' ? '#f3f4f6' : '#111827',
-    }),
+    singleValue: (base) => ({ ...base, color: theme === 'dark' ? '#f3f4f6' : '#111827' }),
     multiValue: (base) => ({
       ...base,
-      backgroundColor: theme === 'dark' ? '#374151' : '#e0e7ff', // gray-700 : indigo-100
+      backgroundColor: theme === 'dark' ? '#374151' : '#e0e7ff',
       borderRadius: '0.375rem',
     }),
-    multiValueLabel: (base) => ({
-      ...base,
-      color: theme === 'dark' ? '#f3f4f6' : '#3730a3', // white : indigo-900
-    }),
+    multiValueLabel: (base) => ({ ...base, color: theme === 'dark' ? '#f3f4f6' : '#3730a3' }),
     multiValueRemove: (base) => ({
       ...base,
       color: theme === 'dark' ? '#9ca3af' : '#4f46e5',
@@ -119,125 +114,92 @@ export default function CreateCourse() {
         color: theme === 'dark' ? '#ffffff' : '#312e81',
       },
     }),
-    input: (base) => ({
-        ...base,
-        color: theme === 'dark' ? '#fff' : '#000',
-    })
+    input: (base) => ({ ...base, color: theme === 'dark' ? '#fff' : '#000' })
   };
 
   // -------------------- Create Course --------------------
   const handleCreateCourse = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!user) {
-      setError('You must be logged in to create a course.');
+    if (!user) { setError('You must be logged in to create a course.'); return; }
+    
+    // Validation
+    if (!title || !description || selectedTags.length === 0 || !imageUrl) {
+      setError('Please fill out basic details and upload an image.');
       return;
     }
-
-    if (!title || !description || selectedTags.length === 0 || !imageUrl) {
-      setError('Please fill out all fields, upload an image, and select at least one tag.');
+    if (pricingType === 'paid' && (!price || Number(price) <= 0 || !paymentInstructions)) {
+      setError('Paid courses require a price greater than 0 and payment instructions.');
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const tagStrings = selectedTags.map((tag) => tag.value);
-
       await addDoc(collection(db, 'courses'), {
         title,
-        level: level,
+        level,
         description,
         tags: tagStrings,
         imageUrl,
-        isActivated: false, // <-- NEW: Must be activated by admin
-        isHidden: true,     // <-- NEW: Hidden by default
-        instructorIds: [user.uid], 
+        isActivated: false,
+        isHidden: true,
+        instructorIds: [user.uid],
         createdAt: new Date(),
+        // --- NEW FIELDS ---
+        pricingType,
+        price: pricingType === 'paid' ? Number(price) : 0,
+        paymentInstructions: pricingType === 'paid' ? paymentInstructions : '',
       });
-
-      router.push('/educator/dashboard'); // Redirect to educator dashboard
+      router.push('/educator/dashboard');
     } catch (err: any) {
       console.error(err);
       setError(`Failed to create course: ${err.message}`);
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  // -------------------- Render --------------------
   if (loading) return (
     <div className="flex h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-            <p className="text-sm text-gray-500">Initializing Course Creator...</p>
-        </div>
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
     </div>
   );
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
-        {/* Header */}
+    <div className="max-w-4xl mx-auto pb-20 px-4">
         <div className="mb-8">
-            <Link 
-                href="/educator/dashboard" 
-                className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-4 transition-colors"
-            >
+            <Link href="/educator/dashboard" className="inline-flex items-center text-sm text-gray-500 hover:text-indigo-600 mb-4 transition-colors">
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
             </Link>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create a New Course</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-                Share your knowledge with the world. Fill in the details below.
-            </p>
         </div>
 
       <form onSubmit={handleCreateCourse} className="space-y-8">
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column: Image Upload */}
+            {/* Left Column: Image */}
             <div className="lg:col-span-1 space-y-6">
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
                     <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <ImagePlus className="w-4 h-4 text-indigo-500" />
-                        Course Cover
+                        <ImagePlus className="w-4 h-4 text-indigo-500" /> Course Cover
                     </label>
-                    
-                    <div className="space-y-4">
-                        <ImageUploader onUploadComplete={setImageUrl} />
-                        
-                        {imageUrl ? (
-                            <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 shadow-sm aspect-video group">
-                                <img
-                                    src={imageUrl}
-                                    alt="Course cover preview"
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">Preview</span>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="aspect-video rounded-xl bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-gray-400">
-                                <ImagePlus className="w-8 h-8 mb-2 opacity-50" />
-                                <span className="text-xs">No image selected</span>
-                            </div>
-                        )}
-                    </div>
+                    <ImageUploader onUploadComplete={setImageUrl} />
+                    {imageUrl && (
+                        <div className="mt-4 rounded-xl overflow-hidden border border-gray-200 aspect-video">
+                            <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Right Column: Form Details */}
+            {/* Right Column: General Info */}
             <div className="lg:col-span-2 space-y-6">
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
-                    
-                    {/* Title */}
                     <div>
-                        <label htmlFor="title" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <Type className="w-4 h-4 text-indigo-500" />
-                            Course Title
+                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <Type className="w-4 h-4 text-indigo-500" /> Course Title
                         </label>
-                        <span className={`text-xs font-mono ${title.length >= 50 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
-                            {title.length} / 75
+                        <span className={`text-[12px] font-mono font-bold px-2 py-0.5 rounded-md ${title.length >= 70 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+                                {title.length} / 75
                         </span>
                         <input
                             type="text"
@@ -245,97 +207,119 @@ export default function CreateCourse() {
                             placeholder="e.g. Advanced Solidity Patterns"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            maxLength={75}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            maxLength={75} // Hardware limit
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                         />
                     </div>
 
-                    {/* Description */}
                     <div>
-                        <label htmlFor="description" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-indigo-500" />
-                            Description
+                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-indigo-500" /> Description
                         </label>
-                        <span className={`text-xs font-mono ${description.length >= 220 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
-                            {description.length} / 350
-                        </span>
-                        <textarea
+                        <span className={`text-[12px] font-mono font-bold px-2 py-0.5 rounded-md ${description.length >= 330 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+                                {description.length} / 350
+                            </span>
+                            <textarea
                             id="description"
                             placeholder="What will students learn in this course?"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            maxLength={350}
-                            rows={5}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                            maxLength={350} // Hardware limit
+                            rows={4}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none resize-none"
                         />
                     </div>
+                    
 
-                    {/* Tags */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <Tags className="w-4 h-4 text-indigo-500" />
-                            Topics / Tags
+                            <Tags className="w-4 h-4 text-indigo-500" /> Topics
                         </label>
-                        <Select
-                            instanceId="tag-select"
-                            isMulti
-                            options={availableTags}
-                            value={selectedTags}
-                            onChange={(selectedOptions) => setSelectedTags(selectedOptions as SelectOption[])}
-                            styles={selectStyles}
-                            placeholder="Select relevant topics..."
-                            className="text-sm"
-                        />
+                        <Select isMulti options={availableTags} value={selectedTags} onChange={(opt) => setSelectedTags(opt as SelectOption[])} styles={selectStyles} />
                     </div>
 
-                    {/* Level */}  
                     <div>
-                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                        <ChartColumnIncreasing className="w-4 h-4 text-indigo-500" />
-                            Difficulty Level
-                      </label>
-                      <select 
-                        value={level} 
-                        onChange={(e) => setLevel(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      >
-                        <option value="basic">Basic - No prior knowledge</option>
-                        <option value="intermediate">Intermediate - Basic understanding required</option>
-                        <option value="advanced">Advanced - Expert level concepts</option>
-                      </select>
+                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <ChartColumnIncreasing className="w-4 h-4 text-indigo-500" /> Difficulty
+                        </label>
+                        <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                            <option value="basic">Basic</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* --- NEW PRICING SECTION --- */}
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-indigo-500" /> Pricing & Enrollment
+                    </label>
+
+                    <div className="flex gap-4">
+                        <button 
+                            type="button"
+                            onClick={() => setPricingType('free')}
+                            className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all ${pricingType === 'free' ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-gray-100 text-gray-400'}`}
+                        >
+                            Free Course
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={() => setPricingType('paid')}
+                            className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all ${pricingType === 'paid' ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-gray-100 text-gray-400'}`}
+                        >
+                            Paid Course
+                        </button>
                     </div>
 
+                    {pricingType === 'paid' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Course Price (₱)</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="0.00"
+                                    value={price}
+                                    onChange={(e) => setPrice(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                    <CreditCard className="w-3 h-3" /> Payment Instructions
+                                </label>
+                                <textarea 
+                                    placeholder="Enter GCash number or Bank Details for students to send payment to..."
+                                    value={paymentInstructions}
+                                    onChange={(e) => setPaymentInstructions(e.target.value)}
+                                    rows={3}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
 
-        {/* Error Message */}
         {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-2 text-red-600 dark:text-red-400">
-                <AlertCircle className="w-5 h-5" />
-                {error}
+            <div className="p-4 bg-red-50 text-red-600 rounded-xl flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" /> {error}
             </div>
         )}
 
-        {/* Submit Button */}
         <div className="flex justify-end">
             <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg disabled:opacity-50"
             >
-                {isSubmitting ? (
-                    <>
-                        <Loader2 className="w-5 h-5 animate-spin" /> Creating...
-                    </>
-                ) : (
-                    <>
-                        <PlusCircle className="w-5 h-5" /> Create Course
-                    </>
-                )}
+                {isSubmitting ? <Loader2 className="animate-spin" /> : <PlusCircle />} 
+                {isSubmitting ? 'Creating...' : 'Create Course'}
             </button>
         </div>
       </form>
     </div>
   );
-}
+} 

@@ -416,7 +416,7 @@ export default function AnalyticsPage() {
                             ))}
                         </div>
                     </div>
-                    <div className="h-[300px]">
+                    <div className="h-[400px]">
                         <Line data={chartData.lineChartData} options={getChartOptions('Trends')} />
                     </div>
                 </div>
@@ -427,7 +427,7 @@ export default function AnalyticsPage() {
                         <PieChart className="w-5 h-5 text-gray-400" />
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">Engagement Share (Submissions)</h3>
                     </div>
-                    <div className="h-[300px] w-full max-w-md mx-auto">
+                    <div className="h-[500px] w-full max-w-md mx-auto">
                         <Pie data={chartData.pieChartData} options={getPieOptions()} />
                     </div>
                 </div>

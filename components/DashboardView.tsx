@@ -31,7 +31,10 @@ import {
     LayoutDashboard,
     Loader2,
     Sparkles,
-    Trophy   
+    Trophy,
+    Users,
+    Tags,
+    CreditCard   
 } from 'lucide-react';
 
 // ----------------------------- Types ------------------------------------
@@ -604,18 +607,41 @@ const active = sortedAllFetched.filter(c => !completedIds.includes(c.id));
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-8">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Tools</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Link href="/admin/users" className="group block p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 mb-2">User Management</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">View, edit, and manage all registered users.</p>
-        </Link>
-        <Link href="/admin/tags" className="group block p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 mb-2">Tag Management</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Create and organize course categories and tags.</p>
-        </Link>
-        <Link href="/admin/courses" className="group block p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 mb-2">Course Management</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Assign instructors and manage visibility.</p>
-        </Link>
+
+        <Link href="/admin/payments" className="group block p-6 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-800 hover:border-amber-500 transition-all">
+        <div className="p-2 bg-amber-500 text-white rounded-lg w-fit mb-4 group-hover:scale-110 transition-transform">
+          <CreditCard className="w-6 h-6" />
+        </div>
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-amber-600 mb-2">Verify Payments</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Check receipts and unlock courses for students.</p>
+      </Link>
+
+      {/* 2. User Management - BLUE */}
+      <Link href="/admin/users" className="group block p-6 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800 hover:border-blue-500 transition-all">
+        <div className="p-2 bg-blue-500 text-white rounded-lg w-fit mb-4 group-hover:scale-110 transition-transform">
+          <Users className="w-6 h-6" />
+        </div>
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 mb-2">User Management</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300">View, edit, and manage all registered users and roles.</p>
+      </Link>
+
+      {/* 3. Tag Management - EMERALD */}
+      <Link href="/admin/tags" className="group block p-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-200 dark:border-emerald-800 hover:border-emerald-500 transition-all">
+        <div className="p-2 bg-emerald-500 text-white rounded-lg w-fit mb-4 group-hover:scale-110 transition-transform">
+          <Tags className="w-6 h-6" />
+        </div>
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-emerald-600 mb-2">Tag Management</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Create and organize course categories and search tags.</p>
+      </Link>
+
+      {/* 4. Course Management - INDIGO */}
+      <Link href="/admin/courses" className="group block p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-200 dark:border-indigo-800 hover:border-indigo-500 transition-all">
+        <div className="p-2 bg-indigo-500 text-white rounded-lg w-fit mb-4 group-hover:scale-110 transition-transform">
+          <Sparkles className="w-6 h-6" />
+        </div>
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-indigo-600 mb-2">Course Management</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Review course submissions and manage global visibility.</p>
+      </Link>
       </div>
       {/* REMOVED: renderRecentActivity() */}
     </div>

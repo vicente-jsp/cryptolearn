@@ -73,7 +73,7 @@ export default function VideoUploader({ onUploadComplete, onUploadStart, onUploa
     return (
         <div className="w-full">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                <Video className="w-4 h-4 text-indigo-500" /> Lesson Video (Optional)
+                <Video className="w-4 h-4 text-indigo-500" /> Lesson Video
             </label>
 
             {/* 1. IDLE STATE: Upload Zone */}

@@ -23,6 +23,7 @@ import {
     arrayUnion,
     writeBatch,
     Timestamp,
+    
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import useAuth from '@/hooks/useAuth';
@@ -46,7 +47,8 @@ import {
     History,
     X,
     ArrowRight,
-    Paperclip
+    Paperclip,
+    FileText,
 } from 'lucide-react';
 
 // --- Type Definitions ---
@@ -137,8 +139,9 @@ interface Module {
 }
 
 interface EnrollmentData {
-    status: 'enrolled';
+    status: 'pending' | 'enrolled' | 'rejected'; // Added pending and rejected
     completedItems?: string[];
+    paymentProofUrl?: string; // Optional: to know if they've submitted proof
 }
 
 // --- Helper Functions ---
@@ -728,6 +731,29 @@ export default function CourseViewerPage() {
 
     const [attemptsMade, setAttemptsMade] = useState(0);
 
+    const getViewerUrl = (url: string) => {
+        // Encodes the URL and wraps it in Google's universal document viewer
+        return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+    };
+
+    const getFileViewUrl = (fileUrl: string, fileName: string) => {
+        const name = fileName.toLowerCase();
+        
+        // 1. If it's a PDF, use the Cloudinary URL directly.
+        // Most browsers will open this perfectly in an iframe.
+        if (name.endsWith('.pdf')) {
+            return fileUrl; 
+        }
+
+        // 2. If it's a DOCX or DOC, use Google Docs Viewer.
+        if (name.endsWith('.docx') || name.endsWith('.doc')) {
+            return `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+        }
+
+        // 3. Fallback
+        return fileUrl;
+    };
+
     const trackLabUsage = async () => {
     if (!user || !selectedLesson) return;
     try {
@@ -748,7 +774,7 @@ export default function CourseViewerPage() {
             const firstChild = childNodes[0];
             if (
             typeof firstChild === 'string' &&
-            firstChild.startsWith('![Image]')
+            firstChild.startsWith('![')
         ) {
             const imgMatch = firstChild.match(/!\[.*?\]\((.*?)\)/);
             const url = imgMatch ? imgMatch[1] : null;
@@ -848,8 +874,25 @@ export default function CourseViewerPage() {
                 getDoc(doc(db, 'courses', courseId))
             ]);
 
-            if (!enrollmentSnap.exists()) throw new Error('You are not enrolled in this course.');
-            setEnrollmentData(enrollmentSnap.data() as EnrollmentData);
+            if (!enrollmentSnap.exists()) {
+    throw new Error('You are not enrolled. Please return to the catalog to buy this course.');
+}
+
+const data = enrollmentSnap.data() as EnrollmentData;
+setEnrollmentData(data);
+
+// PAID SYSTEM CHECK:
+if (data.status === 'pending') {
+    setError("Access Pending: Your payment proof is currently being verified by our team. Please check back later.");
+    setLoading(false);
+    return;
+}
+
+if (data.status === 'rejected') {
+    setError("Access Denied: Your enrollment request was rejected. If you believe this is an error, please contact support.");
+    setLoading(false);
+    return;
+}
 
             if (courseDocSnap.exists()) {
             setCourse(courseDocSnap.data() as { title: string });
@@ -952,6 +995,7 @@ export default function CourseViewerPage() {
                     return { id: moduleDoc.id, ...moduleData, lessons: lessonsList } as Module;
                 })
             );
+            
 
             setModules(modulesList);
 
@@ -1372,21 +1416,48 @@ export default function CourseViewerPage() {
                                         <Paperclip className="text-indigo-600" /> Lesson Resources
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {selectedLesson.attachments.map((file, i) => (
+                                        {/* Find the Lesson Resources loop */}
+                                    {selectedLesson.attachments.map((file: { name: string; url: string }, i: number) => {
+                                        const isPdf = file.name.toLowerCase().endsWith('.pdf');
+                                        const isDoc = file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx');
+
+                                        return (
                                             <div key={i} className="p-4 bg-white dark:bg-gray-800 border rounded-2xl flex justify-between items-center shadow-sm">
-                                                <span className="text-sm font-medium truncate pr-4">{file.name}</span>
+                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                    <FileText className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+                                                    <span className="text-sm font-medium truncate text-gray-900 dark:text-white">
+                                                        {file.name}
+                                                    </span>
+                                                </div>
+                                                
                                                 <div className="flex gap-2">
-                                                    
-                                                    <a 
-                                                        href={file.url} 
-                                                        download={file.name}
-                                                        className="px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-200"
-                                                    >
-                                                        Open
-                                                    </a>
+                                                    {/* 
+                                                    VIEW BUTTON: Opens the Google Docs Viewer in a new tab.
+                                                    This works for BOTH PDF and DOCX.
+                                                    */}
+                                                    {(isPdf || isDoc) ? (
+                                                        <a 
+                                                            href={getViewerUrl(file.url)} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                                                        >
+                                                            View
+                                                        </a>
+                                                    ) : (
+                                                        /* Fallback for other file types */
+                                                        <a 
+                                                            href={file.url} 
+                                                            download
+                                                            className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                                                        >
+                                                            Download
+                                                        </a>
+                                                    )}
                                                 </div>
                                             </div>
-                                        ))}
+                                        );
+                                    })}
                                     </div>
                                 </div>
                             )}
@@ -1649,14 +1720,32 @@ export default function CourseViewerPage() {
                             <button onClick={() => setPreviewFile(null)} className="p-2 hover:bg-gray-100 rounded-full"><X /></button>
                         </div>
                         <div className="flex-grow bg-gray-100 dark:bg-gray-800">
-                            {/* PDF and Images can be viewed in an iframe/img */}
-                            {previewFile.url.includes('.pdf') ? (
-                                <iframe src={`${previewFile.url}#toolbar=0`} className="w-full h-full border-0" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center p-10">
-                                    <img src={previewFile.url} crossOrigin="anonymous" className="max-w-full max-h-full object-contain shadow-2xl" alt="Preview" />
-                                </div>
-                            )}
+                            {(() => {
+                                const name = previewFile.name.toLowerCase();
+                                const isDoc = name.endsWith('.docx') || name.endsWith('.doc') || name.endsWith('.xlsx');
+
+                                if (isDoc) {
+                                    return (
+                                        <iframe 
+                                            // Use Google Docs Viewer for all document types
+                                            src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewFile.url)}&embedded=true`} 
+                                            className="w-full h-full border-0" 
+                                            title="Document Preview"
+                                        />
+                                    );
+                                }
+
+                                /* Image Preview Fallback */
+                                return (
+                                    <div className="w-full h-full flex items-center justify-center p-10">
+                                        <img 
+                                            src={previewFile.url} 
+                                            className="max-w-full max-h-full object-contain shadow-2xl" 
+                                            alt="Preview" 
+                                        />
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
