@@ -13,6 +13,10 @@ export default function PaymentModal({ course, onClose }: any) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handlePaymentSubmit = async () => {
+        if (!user) {
+            alert("You must be logged in to perform this action.");
+            return;
+        }
         if (!proofUrl) return alert("Please upload your payment receipt.");
         setIsSubmitting(true);
 
@@ -29,6 +33,7 @@ export default function PaymentModal({ course, onClose }: any) {
                 paymentProofUrl: proofUrl, // The Cloudinary URL
                 price: course.price,
                 requestedAt: serverTimestamp(),
+                paymentType: 'paid'
             });
 
             // 2. Notify the Admin (Global Notifications Collection)
