@@ -255,7 +255,7 @@ function CourseCatalogContent() {
             <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-1">
                     <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Search</label>
-                    <div className="relative w-180">
+                    <div className="relative w-150%">
                         <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
                         <input
                             type="text"
@@ -268,7 +268,7 @@ function CourseCatalogContent() {
                 </div>
                 <div className="flex-1">
                     <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Topics</label>
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide w-175">
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide w-150">
                         {allTags.map(tag => (
                             <button
                                 key={tag}
